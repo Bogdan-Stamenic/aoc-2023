@@ -1,69 +1,88 @@
-use nom::{bytes::complete::{take_while1, take_till}, IResult, multi::many0, error::Error};
+use nom::{bytes::complete::{tag, take_while1}, branch::alt, combinator::{all_consuming, value}, sequence::separated_pair, IResult, multi::{separated_list0,separated_list1}, Parser};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CubeColors {
     red: u32,
     green: u32,
     blue: u32,
 }
 
-fn take_next_color_val<'a>(input: &'a str)  -> IResult<&'a str, (&'a str, u32)> {
-    let (i,_) = take_till(char::is_alphanumeric)(input)?;
-    let (i,num) = take_while1(char::is_numeric)(i)?;
-    let (i,_) = take_while1(char::is_whitespace)(i)?;
-    let (out,color) = take_while1(char::is_alphabetic)(i)?;
-    let out = match take_till::<_,&str,Error<_>>(char::is_whitespace)(out) {
-        Ok((val,_)) => val,
-        Err(_) => "",
-    };
-    let num = match num.parse::<u32>() {
-        Ok(val) => val,
-        Err(_) => 0u32,
-    };
-    Ok((out,(color, num)))
-}
-
-fn find_color_val_pair(color_val_pair: &[(&str,u32)], color: &str) -> u32 {
-    let ans = color_val_pair
-        .iter()
-        .filter(|(str,_)| *str ==  color)
-        .next();
-    match ans {
-        Some((_,val)) => *val,
-        None => 0,
+impl CubeColors {
+    fn set_color(&mut self, value: u32, color: Color) {
+        *match color {
+            Color::Red => &mut self.red,
+            Color::Green => &mut self.green,
+            Color::Blue => &mut self.blue,
+        } = value;
     }
 }
 
-/* Expects a slice like " 3 blue, 4 red" */
-fn block_to_cube_colors(input: &str) -> IResult<&str, CubeColors> {
-    let (_,pairs) = many0(take_next_color_val)(input)?;
-    let cubes = CubeColors {
-        red: find_color_val_pair(&pairs, "red"),
-        green: find_color_val_pair(&pairs, "green"),
-        blue: find_color_val_pair(&pairs, "blue"),
-    };
-    Ok((input, cubes))
+impl FromIterator<(u32,Color)> for CubeColors {
+    fn from_iter<T: IntoIterator<Item = (u32, Color)>>(iter: T) -> Self {
+        let mut cube_colors = Self::default();
+        for (count, color) in iter {
+            cube_colors.set_color(count, color);
+        }
+        cube_colors
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Color {
+    Red,
+    Green,
+    Blue,
 }
 
 #[aoc_generator(day2)]
 pub fn input_generator(input: &str) -> Vec<Vec<CubeColors>> {
-    input
-        .lines()
-        .map(|line| {
-            let game_results: String = line
-                .chars()
-                .skip(line.find(':').unwrap())
-                .collect();
-            game_results.split(';')
-                .map(|block| {
-                    match block_to_cube_colors(block) {
-                        Ok((_,val)) => val,
-                        Err(e) => panic!("{}", e),
-                    }
-                })
-            .collect()
-        })
-    .collect()
+    match all_consuming(separated_list0(tag("\n"), parse_game))(input) {
+        Ok((_,v)) => v,
+        Err(e) => panic!("{}",e),
+    }
+}
+
+fn parse_game(input: &str) -> IResult<&str, Vec<CubeColors>> {
+    separated_pair(parse_game_id, tag(": "), parse_game_results)
+        .map(|(_, v)| v)
+        .parse(input)
+}
+
+fn parse_game_id(input: &str) -> IResult<&str, u32> {
+    let (str, _) = tag("Game ")(input)?;
+    let (out, num) = take_while1(char::is_numeric)(str)?;
+    let num = match num.parse::<u32>() {
+        Ok(val) => val,
+        Err(e) => panic!("At input \"{}\" : {}", str, e),
+    };
+    Ok((out, num))
+}
+
+fn parse_game_results(input: &str) -> IResult<&str, Vec<CubeColors>> {
+    separated_list0(tag("; "), parse_game_subset)(input)
+}
+
+fn parse_game_subset(input: &str) -> IResult<&str, CubeColors> {
+    separated_list1(tag(", "), parse_color_val)
+        .map(|el| el.into_iter().collect())
+        .parse(input)
+}
+fn parse_color_val(input: &str) -> IResult<&str, (u32,Color)> {
+    separated_pair(parse_val, tag(" "), parse_color)(input)
+}
+
+fn parse_color(input: &str) -> IResult<&str, Color> {
+    alt((
+            value(Color::Red, tag("red")),
+            value(Color::Green, tag("green")),
+            value(Color::Blue, tag("blue")),
+    ))(input)
+}
+
+fn parse_val(input: &str) -> IResult<&str, u32> {
+    let (i, num) = take_while1(char::is_numeric)(input)?;
+    let num = num.parse::<u32>().unwrap();
+    Ok((i, num))
 }
 
 fn does_game_pass_part1(game: &[CubeColors]) -> bool {
@@ -104,30 +123,50 @@ pub fn solve_part2(input: &Vec<Vec<CubeColors>>) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::day2;
-
     use super::*;
-    const TEST_COLOR_VAL: &str = " 3 blue, 4 red";
-
+    
     #[test]
-    fn test_take_next_color_val_1() {
-        let ans1 = take_next_color_val(TEST_COLOR_VAL);
-        assert_eq!(ans1, Ok((" 4 red", ("blue", 3))));
-        let ans2 = take_next_color_val(ans1.unwrap().0);
-        assert_eq!(ans2, Ok(("", ("red", 4))))
+    fn test_parse_color() {
+        const INPUT: &str = "blue";
+        let ans = parse_color(INPUT);
+        assert_eq!(ans, Ok(("", Color::Blue)))
     }
 
     #[test]
-    fn test_take_next_color_val_2() {
-        const TEST_COLOR_VAL2: &str = ": 22 red, 5 green";
-        let ans = take_next_color_val(TEST_COLOR_VAL2);
-        assert_eq!(ans, Ok((" 5 green", ("red", 22))));
+    fn test_parse_val() {
+        const INPUT: &str = "22 blue";
+        let ans = parse_val(INPUT);
+        assert_eq!(ans, Ok((" blue", 22)))
     }
 
     #[test]
-    fn test_block_to_cube_colors() {
-        let ans = block_to_cube_colors(TEST_COLOR_VAL);
-        assert_eq!(ans, Ok((TEST_COLOR_VAL, CubeColors{red: 4, green: 0, blue: 3})))
+    fn test_parse_color_val() {
+        const INPUT1: &str = "3 blue";
+        let ans1 = parse_color_val(INPUT1);
+        assert_eq!(ans1, Ok(("", (3, Color::Blue))));
+    }
+
+    #[test]
+    fn test_parse_game_subset() {
+        const INPUT1: &str = "4 red";
+        let ans = parse_game_subset(INPUT1);
+        assert_eq!(ans, Ok(("", CubeColors{red: 4, green: 0, blue: 0})));
+        const INPUT2: &str = "3 blue, 1 green, 4 red";
+        let ans = parse_game_subset(INPUT2);
+        assert_eq!(ans, Ok(("", CubeColors{red: 4, green: 1, blue: 3})))
+    }
+
+    #[test]
+    fn test_parse_game() {
+        const INPUT: &str = "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue";
+        let ans = parse_game(INPUT);
+        assert_eq!(ans, Ok(("",
+                    vec![
+                    CubeColors {red: 0, green: 2, blue: 1},
+                    CubeColors {red: 1, green: 3, blue: 4},
+                    CubeColors {red: 0, green: 1, blue: 1},
+                    ]
+                    )))
     }
 
     const TEST_INPUT1: &str = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
@@ -170,7 +209,7 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green";
 
     #[test]
     fn test_cube_colors_comparison() {
-        const EXAMPLE_CUBE_COLORS: day2::CubeColors = CubeColors{red: 1, green: 1, blue: 1};
+        const EXAMPLE_CUBE_COLORS: CubeColors = CubeColors{red: 1, green: 1, blue: 1};
         /* Should be only greater than */
         assert_eq!(EXAMPLE_CUBE_COLORS < CubeColors{red: 2, green: 1, blue: 1}, true);
         assert_eq!(EXAMPLE_CUBE_COLORS > CubeColors{red: 2, green: 1, blue: 1}, false);
