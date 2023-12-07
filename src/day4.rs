@@ -45,11 +45,11 @@ fn parse_num(input: &str) -> IResult<&str, u32> {
 }
 
 fn parse_scratch_nums(input: &str) -> IResult<&str, (HashSet<u32>, HashSet<u32>)> {
-    separated_pair(parse_nums_to_bin_heap, tag(" | "), parse_nums_to_bin_heap)
+    separated_pair(parse_nums_to_hast_set, tag(" | "), parse_nums_to_hast_set)
         .parse(input)
 }
 
-fn parse_nums_to_bin_heap(input: &str) -> IResult<&str, HashSet<u32>> {
+fn parse_nums_to_hast_set(input: &str) -> IResult<&str, HashSet<u32>> {
     separated_list1(
         take_while1(char::is_whitespace),
         alt((parse_num, preceded(take_while1(char::is_whitespace), parse_num)))
@@ -82,10 +82,13 @@ impl ScratchCardSpawnTracker {
    }
 
    /* magic_fn(2,2) for self.queue = [1,1,1]
-    * => self.queue = [3, 3, 1]
+    * => self.queue = [3,3,1]
     *
     * magic_fn(4,1) for self.queue = []
     * => self.queue = [1,1,1,1]
+    *
+    * magic_fn(4,2) for self.queue = [5,2]
+    * => self.queue = [7,4,2,2]
     * */
    fn magic_fn(&mut self, affected: usize, num_cards: u32) {
        for idx in 0..affected {
