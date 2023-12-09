@@ -32,17 +32,23 @@ enum CamelCard {
     A,//largest
 }
 
-#[derive(Clone,Debug,PartialEq,Eq,PartialOrd)]
+#[derive(Clone,Debug,PartialEq,Eq)]
 #[allow(dead_code)]
 pub struct CamelCardsHand {
     cards: Vec<CamelCard>,
     bid_value: u64,
 }
 
+impl PartialOrd for CamelCardsHand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
 impl Ord for CamelCardsHand {
     fn cmp(&self, other: &Self) -> Ordering {
-        let self_type = self.hand_type();
-        let other_type = other.hand_type();
+        let self_type = self.hand_type_p1();
+        let other_type = other.hand_type_p1();
         if self_type > other_type {
             return Ordering::Greater;
         }
@@ -62,8 +68,37 @@ impl Ord for CamelCardsHand {
     }
 }
 
+#[allow(dead_code)]
 impl CamelCardsHand {
-    fn hand_type(&self) -> HandType {
+    fn cmp_alt(&self, other: &Self) -> Ordering {
+        let self_type = self.hand_type_p2();
+        let other_type = other.hand_type_p2();
+        if self_type > other_type {
+            return Ordering::Greater;
+        }
+        if self_type < other_type {
+            return Ordering::Less;
+        }
+
+        let my_iter = zip(self.cards.iter(), other.cards.iter());
+        for (my_card, other_card) in my_iter {
+            if (*my_card != CamelCard::J) && (*other_card == CamelCard::J) {
+                return Ordering::Greater;
+            }
+            if (*my_card == CamelCard::J) && (*other_card != CamelCard::J) {
+                return Ordering::Less;
+            }
+            if my_card > other_card {
+                return Ordering::Greater;
+            }
+            if my_card < other_card {
+                return Ordering::Less;
+            }
+        }
+        Ordering::Equal
+    }
+
+    fn hand_type_p1(&self) -> HandType {
         let card_counter = self.count_card_types();
         match card_counter.len() {
             5 => HandType::HighCard,
@@ -76,6 +111,64 @@ impl CamelCardsHand {
                 }
             },
             2 => {//Four of a kind OR Full House
+                match card_counter.iter().map(|(_,x)| x).min().unwrap() {
+                    2 => HandType::FullHouse,
+                    1 => HandType::FourOfAKind,
+                    _ => unreachable!("Unexpected match"),
+                }
+            },
+            1 => HandType::FiveOfAKind,
+            _ => unreachable!("Error while counting camel cards"),
+        }
+    }
+
+    /* To make more sense of this, look at above function and apply Joker rule 
+     * => CamelCard::J contribute to the best possible HandType
+     * */
+    fn hand_type_p2(&self) -> HandType {
+        let card_counter = self.count_card_types();
+        match card_counter.len() {
+            5 => {// 5 unique cards
+                if card_counter.contains_key(&CamelCard::J) {
+                    return HandType::OnePair;
+                }
+                HandType::HighCard
+            },
+            4 => {// 4 unique cards
+                if card_counter.contains_key(&CamelCard::J) {
+                    return HandType::ThreeOfAKind;
+                }
+                HandType::OnePair
+            },
+            3 => {// 3 unique cards
+                match card_counter.iter().map(|(_,x)| x).max().unwrap() {
+                    3 => {//Three-of-kind OR Four-of-a-kind with jokers
+                        if card_counter.contains_key(&CamelCard::J) {
+                            return HandType::FourOfAKind;
+                        }
+                        HandType::ThreeOfAKind
+                    },
+                    2 => {//Two pairs OR with jokers Full House or Four-of-a-kind
+                        match &card_counter.get(&CamelCard::J) {
+                            Some(val) => {
+                                if **val == 1 {
+                                    return HandType::FullHouse;
+                                }
+                                if **val == 2 {
+                                    return HandType::FourOfAKind;
+                                }
+                                unreachable!("Double-check hand_type_p2");
+                            },
+                            None => HandType::TwoPair,
+                        }
+                    },
+                    _ => unreachable!("Unexpected match"),
+                }
+            },
+            2 => {// 2 unique cards
+                if card_counter.contains_key(&CamelCard::J) {
+                    return HandType::FiveOfAKind;
+                }
                 match card_counter.iter().map(|(_,x)| x).min().unwrap() {
                     2 => HandType::FullHouse,
                     1 => HandType::FourOfAKind,
@@ -140,7 +233,7 @@ fn parse_num(input: &str) -> IResult<&str, u64> {
 #[aoc(day7, part1)]
 pub fn solve_part1(input: &[CamelCardsHand]) -> u64 {
     let mut hands = input.to_vec();
-    hands.sort_unstable_by(|a,b| a.cmp(&b));
+    hands.sort_unstable();
     hands.into_iter()
         .enumerate()
         .map(|(i,score)| {
@@ -149,9 +242,17 @@ pub fn solve_part1(input: &[CamelCardsHand]) -> u64 {
         .sum()
 }
 
-//#[aoc(day7, part2)]
-//pub fn solve_part2(input: &Almanac) -> i64 {
-//}
+#[aoc(day7, part2)]
+pub fn solve_part2(input: &[CamelCardsHand]) -> u64 {
+    let mut hands = input.to_vec();
+    hands.sort_unstable_by(|a,b| a.cmp_alt(&b));
+    hands.into_iter()
+        .enumerate()
+        .map(|(i,score)| {
+            (i as u64 + 1) * score.bid_value
+        })
+        .sum()
+}
 
 #[cfg(test)]
 mod tests {
@@ -270,7 +371,7 @@ QQQJA 483";
                 cards: vec![CamelCard::Q,CamelCard::Q,CamelCard::Q,CamelCard::J,
                 CamelCard::A], bid_value: 483},
         ];
-        input.sort_unstable_by(|a,b| a.cmp(&b));
+        input.sort_unstable();
         assert_eq!(input,
             vec![
             CamelCardsHand {
@@ -299,8 +400,11 @@ QQQJA 483";
         assert_eq!(ans,6440);
     }
 
-//    #[test]
-//    fn test_solve_day5_p2() {
-//    }
-//
+    #[test]
+    fn test_solve_day7_p2() {
+        let input = input_generator(TEST_INPUT);
+        let ans = solve_part2(&input);
+        assert_eq!(ans,5905);
+    }
+
 }
