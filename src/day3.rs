@@ -86,7 +86,7 @@ pub fn solve_part1(input: &Array2<SchematicEntry>) -> u64 {
                     char_stack.push(num_char);
                     if !fsaw_symbol {
                         fsaw_symbol |= check_above_and_below_for_symbol(&input, (j,i));
-                        if (i > 0) && (char_stack.len() == 1) {//just start reading num chars
+                        if (i > 0) && (char_stack.len() == 1) {
                             fsaw_symbol |= check_above_and_below_for_symbol(&input, (j,i - 1));
                         }
                     }
