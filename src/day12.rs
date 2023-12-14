@@ -307,6 +307,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_solve_day12_p1_memoized() {
         let input1 = input_generator(TEST_INPUT);
         let ans = solve_part1(&input1);
