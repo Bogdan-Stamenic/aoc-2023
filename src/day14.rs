@@ -300,11 +300,4 @@ O.#..O.#.#
         let ans = solve_part1(&input);
         assert_eq!(ans, 136);
     }
-
-//    #[test]
-//    fn test_solve_day12_p2_foo() {
-//        let input = input_generator(TEST_INPUT);
-//        let ans = solve_part2(&input);
-//        assert_eq!(ans, 64);
-//    }
 }
