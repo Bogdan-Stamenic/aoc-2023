@@ -85,6 +85,7 @@ fn parse_hex_direction(input: &str) -> IResult<&str, Direction> {
         .parse(input)
 }
 
+#[inline]
 fn trench_instructions_to_nodes_p1(input: &[TrenchInstruction]) -> Vec<(i32,i32)> {
     let mut node = (0,0);//is always in trench shape
     let mut out = Vec::<(i32,i32)>::from([node]);
@@ -148,6 +149,7 @@ pub fn solve_part1(input: &[TrenchInstruction]) -> i32 {
     ans
 }
 
+#[inline]
 fn trench_instructions_to_nodes_p2(input: &[TrenchInstruction]) -> Vec<(i64,i64)> {
     let mut node = (0,0);//is always in trench shape
     let mut out = Vec::<(i64,i64)>::from([node]);

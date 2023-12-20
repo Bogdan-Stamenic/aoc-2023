@@ -1,44 +1,115 @@
-use std::collections::HashMap;
-use nom::{
-    Parser,
-    IResult,
-    branch::alt,
-    combinator::{all_consuming, value},
-    bytes::complete::{tag, take_while1},
-    multi::separated_list1,
-    sequence::{tuple, preceded},
-};
+use petgraph::{graphmap::DiGraphMap, algo::dijkstra};
+
+#[allow(dead_code)]
+#[derive(Clone,Copy,Debug,Hash,PartialEq,Eq,PartialOrd,Ord)]
+enum Direction {
+    Left,
+    Right,
+    Up,
+    Down,
+    Start,
+}
+
+#[derive(Clone,Copy,Debug,Hash,PartialEq,Eq,PartialOrd,Ord)]
+pub struct HeatlossNode {
+    coords: (usize,usize),
+    dir: Direction,
+    travelled: u32,
+}
 
 #[aoc_generator(day17)]
-pub fn input_generator(input: &str) -> Array2<RockType> {
-    let parse_vec = match all_consuming(separated_list1(tag("\n"), parse_platform_line))
-        .parse(input)
-    {
-        Ok((_, val)) => val,
-        Err(e) => panic!("{}", e),
-    };
-    let shape = (parse_vec.len(), parse_vec[0].dim());
-    let flat = parse_vec.iter().flatten().cloned().collect();
-    let input = Array2::from_shape_vec(shape, flat).expect("Dimensions didn't line up");
-    input
+pub fn input_generator(input: &str) -> (DiGraphMap<HeatlossNode,u32>, (usize, usize)) {
+    let grid = input.lines()
+        .map(|line| {
+            line.chars()
+                .map(|ch: char| ch.to_string().parse::<u32>().unwrap())
+                .collect::<Vec<u32>>()
+        })
+    .collect::<Vec<Vec<u32>>>();
+    let outer_max = grid.len();
+    let inner_max = grid[0].len();
+    let mut out = DiGraphMap::<HeatlossNode,u32>::new();
+    for i in 0..outer_max {
+        for j in 0..inner_max {
+            connect_edges(&mut out, &grid, i, j);
+        }
+    }
+    (out, (outer_max - 1, inner_max - 1))
+}
+
+fn connect_edges(graph: &mut DiGraphMap<HeatlossNode,u32>, grid: &Vec<Vec<u32>>, i: usize, j: usize) {
+    if (i == 0) && (j == 0) {
+        /* special start node */
+        let strt = HeatlossNode {coords: (0,0), dir: Direction::Start, travelled: 0};
+        let below_strt = HeatlossNode {coords: (1,0), dir: Direction::Down, travelled:  1};
+        let right_of_strt = HeatlossNode {coords: (0,1), dir: Direction::Right, travelled:  1};
+        graph.add_edge(strt, below_strt, grid[1][0]);
+        graph.add_edge(strt, right_of_strt, grid[0][1]);
+    } else {
+        /* all other nodes */
+        for direction in vec![Direction::Left, Direction::Right, Direction::Up, Direction::Down].iter() {
+            for dist_travelled in 1..=3 {
+                /* curent node */
+                let foo = HeatlossNode {coords: (i,j), dir: *direction, travelled: dist_travelled};
+                /* Don't go out of bounds && No 180° turns && Don't travel more than 3 tiles in one
+                 * direction*/
+                if (i < grid.len() - 1) && (*direction != Direction::Up) && passes_three_tile_check(&foo, Direction::Down){
+                    let new_travelled = calc_dist_travelled(direction, Direction::Down, dist_travelled);
+                    let bar = HeatlossNode {coords: (i + 1,j), dir: Direction::Down, travelled: new_travelled};
+                    graph.add_edge(foo, bar, grid[i + 1][j]);
+                }
+                if (i > 0) && (*direction != Direction::Down) && passes_three_tile_check(&foo, Direction::Up) {
+                    let new_travelled = calc_dist_travelled(direction, Direction::Up, dist_travelled);
+                    let bar = HeatlossNode {coords: (i - 1,j), dir: Direction::Up, travelled: new_travelled};
+                    graph.add_edge(foo, bar, grid[i - 1][j]);
+                }
+                if (j < grid[0].len() - 1) && (*direction != Direction::Left) && passes_three_tile_check(&foo, Direction::Right){
+                    let new_travelled = calc_dist_travelled(direction, Direction::Right, dist_travelled);
+                    let bar = HeatlossNode {coords: (i,j + 1), dir: Direction::Right, travelled: new_travelled};
+                    graph.add_edge(foo, bar, grid[i][j + 1]);
+                }
+                if (j > 0) && (*direction != Direction::Right) && passes_three_tile_check(&foo, Direction::Left) {
+                    let new_travelled = calc_dist_travelled(direction, Direction::Left, dist_travelled);
+                    let bar = HeatlossNode {coords: (i,j - 1), dir: Direction::Left, travelled: new_travelled};
+                    graph.add_edge(foo, bar, grid[i][j - 1]);
+                }
+            }
+        }
+    }
+}
+
+/* Don't travel more than 3 tiles in one direction */
+#[inline]
+fn passes_three_tile_check(node: &HeatlossNode, direction: Direction) -> bool {
+    if (node.dir == direction) && (node.travelled == 3) {
+        return false;
+    }
+    true
+}
+
+/* Reset distance when changing directions */
+#[inline]
+fn calc_dist_travelled(curr_direction: &Direction, next_direction: Direction, dist_travelled: u32) -> u32 {
+    if *curr_direction == next_direction {
+        return dist_travelled + 1;
+    }
+    1
 }
 
 #[aoc(day17, part1)]
-pub fn solve_part1(input: &str) -> u64 {
-    input.split(",")
-        .map(|sub_str| {
-            sub_str.bytes()
-                .fold(0u64, |acc,el| ((acc + el as u64) * 17) % 256)
-        })
-    .sum()
+pub fn solve_part1(input: &(DiGraphMap<HeatlossNode,u32>, (usize,usize))) -> u32 {
+    let (input, last_node) = input;
+    let strt = HeatlossNode {coords: (0,0), dir: Direction::Start, travelled: 0};
+    let ans = dijkstra(&input, strt, None, |edge_ref| *edge_ref.2);
+    ans.into_iter()
+        .filter(|el| el.0.coords == *last_node)
+        .map(|el| el.1)
+        .min().unwrap()
 }
 
-#[aoc(day17, part2)]
-pub fn solve_part2(input: &str) -> u64 {
-    let instrs = parse_hash_instruction(input);
-    let registers = hashmap_protocoll_for_p2(&instrs);
-    calc_lens_power(registers)
-}
+//#[aoc(day17, part2)]
+//pub fn solve_part2(input: &str) -> u64 {
+//}
 
 #[cfg(test)]
 mod tests {
@@ -56,12 +127,63 @@ mod tests {
 1224686865563
 2546548887735
 4322674655533";
+//13 * 13
+
+    #[test]
+    fn day17_p1_1() {
+        let input = input_generator(TEST_INPUT);
+        let ans = solve_part1(&input);
+        assert_eq!(ans, 102);
+    }
+
+    #[test]
+    fn day17_p1_2() {
+        const INPUT: &str ="11999
+91199
+99119
+99911";
+        let input = input_generator(INPUT);
+        let ans = solve_part1(&input);
+        assert_eq!(ans, 7);
+    }
+
+    /* Can go 3 tiles in one direction, but no further */
+    #[test]
+    fn day17_p1_3() {
+        const INPUT: &str ="10000
+99110
+99110
+99010
+99990";
+//1....
+//9911.
+//9911.
+//99.1.
+//9999.
+        let input = input_generator(INPUT);
+        let ans = solve_part1(&input);
+        assert_eq!(ans, 1);
+    }
+
+    /* Can snake back and forth */
+    #[test]
+    fn day17_p1_4() {
+        const INPUT: &str ="000099
+999009
+999909
+000009
+019999
+099009
+000000";
+        let input = input_generator(INPUT);
+        let ans = solve_part1(&input);
+        assert_eq!(ans, 1);
+    }
+
+
+
 
     //#[test]
-    //fn test_solve_day17_p1() {
-    //}
-
-    //#[test]
-    //fn test_solve_day17_p2() {
+    //fn day17_p2() {
     //}
 }
