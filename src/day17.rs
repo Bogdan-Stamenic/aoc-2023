@@ -27,7 +27,7 @@ pub fn input_generator_p1(input: &str) -> (DiGraphMap<HeatlossNode,u32>, (usize,
     .collect::<Vec<Vec<u32>>>();
     let outer_max = grid.len();
     let inner_max = grid[0].len();
-    let mut out = DiGraphMap::<HeatlossNode,u32>::new();
+    let mut out = DiGraphMap::<HeatlossNode,u32>::with_capacity(16*input.len(), 3*16*input.len());
     for i in 0..outer_max {
         for j in 0..inner_max {
             connect_edges_p1(&mut out, &grid, i, j);
@@ -97,10 +97,9 @@ fn calc_dist_travelled(curr_direction: &Direction, next_direction: Direction, di
 
 #[aoc(day17, part1)]
 pub fn solve_part1(input: &str) -> u32 {
-    let input = input_generator_p1(input);
-    let (input, last_node) = input;
+    let (graph, last_node) = input_generator_p1(input);
     let strt = HeatlossNode {coords: (0,0), dir: Direction::Start, travelled: 0};
-    let ans = dijkstra(&input, strt, None, |edge_ref| *edge_ref.2);
+    let ans = dijkstra(&graph, strt, None, |edge_ref| *edge_ref.2);
     ans.into_iter()
         .filter(|el| el.0.coords == last_node)
         .map(|el| el.1)
@@ -117,7 +116,7 @@ pub fn input_generator_p2(input: &str) -> (DiGraphMap<HeatlossNode,u32>, (usize,
     .collect::<Vec<Vec<u32>>>();
     let outer_max = grid.len();
     let inner_max = grid[0].len();
-    let mut out = DiGraphMap::<HeatlossNode,u32>::new();
+    let mut out = DiGraphMap::<HeatlossNode,u32>::with_capacity(40*input.len(), 18*input.len());
     for i in 0..outer_max {
         for j in 0..inner_max {
             connect_edges_p2(&mut out, &grid, i, j);
