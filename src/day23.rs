@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-
 use petgraph::{prelude::{DiGraphMap,UnGraphMap}, algo::simple_paths::all_simple_paths};
 
 #[allow(dead_code)]
@@ -142,27 +141,27 @@ fn graph_for_p2(input: &Vec<Vec<u8>>) -> HikingTrailP2 {
 
 #[allow(dead_code)]
 fn prune_graph_for_p2(graph: UnGraphMap::<(usize,usize), u64>) -> UnGraphMap::<(usize,usize),u64> {
-    let mut out_graph = graph.clone();
+    let mut out_graph = UnGraphMap::<(usize,usize), u64>::new();
     let junctions = graph.nodes()
         .filter(|n| graph.neighbors(*n).count() != 2)
         .collect::<HashSet<(usize,usize)>>();
     for node in junctions.iter() {
         /* traverse neighbours until adjacent junction is encountered */
-        let mut dist = 1;
         let mut visited = HashSet::from([*node]);
         for next_node in graph.neighbors(*node) {
+            let mut dist = 1;
             let mut curr_node = next_node;
             loop {
-                visited.insert(curr_node);
                 /* Connect if both nodes are junctions */
                 if junctions.contains(&curr_node) {
                     out_graph.add_edge(curr_node, *node, dist);
                     break;
                 }
+                visited.insert(curr_node);
                 dist += 1;
                 let new_curr_node = graph.neighbors(curr_node)
                     .filter(|x| {
-                        visited.contains(x)
+                        !visited.contains(x)
                     }).next().unwrap();
                 curr_node = new_curr_node;
             }
@@ -198,13 +197,23 @@ fn connect_path(hiking_trail: &mut UnGraphMap::<(usize,usize), u64>,
 }
 
 #[aoc(day23,part2)]
-pub fn solve_day23_p2(input: &Vec<Vec<u8>>) -> usize {
+pub fn solve_day23_p2(input: &Vec<Vec<u8>>) -> u64 {
     let hiking_trail_chars = graph_for_p2(input);
     let HikingTrailP2 { path: hiking_trail, start: start_node, end: end_node } = hiking_trail_chars;
     let ways = all_simple_paths(&hiking_trail, start_node, end_node, 1, None).collect::<Vec<Vec<_>>>();
     ways.into_iter()
-        .map(|path| path.len() - 1)
-        .max().expect("no simple paths found")
+        .map(|path_vec| {
+            path_vec.windows(2)
+                .map(|wsl| {
+                    let [p1,p2] = wsl else {unreachable!()};
+                    hiking_trail.edge_weight(*p1,*p2).unwrap()
+                })
+                .sum()
+        })
+    .max().expect("no simple paths found")
+    //ways.into_iter()
+    //    .map(|path| path.len() - 1)
+    //    .max().expect("no simple paths found")
 }
 
 #[cfg(test)]
@@ -235,14 +244,49 @@ mod test {
 #.....###...###...#...#
 #####################.#";
 
+// Helped me solve p2
+//"#.#####################
+//#.......#########...###
+//#######.#########.#.###
+//###.....#..*..###.#.###
+//###.#####.#.#.###.#.###
+//###*....#.#.#.....#...#
+//###.###.#.#.#########.#
+//###...#.#.#.......#...#
+//#####.#.#.#######.#.###
+//#.....#.#.#.......#...#
+//#.#####.#.#.#########.#
+//#.#...#...#...###....*#
+//#.#.#.#######.###.###.#
+//#...#*..#....*..#.###.#
+//#####.#.#.###.#.#.###.#
+//#.....#...#...#.#.#...#
+//#.#########.###.#.#.###
+//#...###...#...#...#.###
+//###.###.#.###.#####.###
+//#...#...#.#..*..#..*###
+//#.###.###.#.###.#.#.###
+//#.....###...###...#...#
+//#####################.#";
+//junctions = { (0,1), (3,11), (5,3), (11,21), (13,5), (13,13), (19,13), (19,19), (22,21)}
     #[test]
-    fn day23_input_generator() {
+    fn day23_input_p1() {
         let input = input_generator(TEST_INPUT);
         let foo = graph_for_p1(&input);
         let HikingTrailP1 { path: hiking_trail, start: start_node, end: end_node } = foo;
         assert_eq!(start_node, (0,1));
         assert_eq!(end_node, (22,21));
         assert_eq!(hiking_trail.node_count(), 213);
+    }
+
+    #[test]
+    fn day23_input_p2() {
+        let input = input_generator(TEST_INPUT);
+        let foo = graph_for_p2(&input);
+        let HikingTrailP2 { path: hiking_trail, start: start_node, end: end_node } = foo;
+        assert_eq!(start_node, (0,1));
+        assert_eq!(end_node, (22,21));
+        assert_eq!(hiking_trail.node_count(), 9);
     }
 
     #[test]
