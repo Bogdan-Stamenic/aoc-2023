@@ -1,6 +1,6 @@
 use core::panic;
 use std::collections::HashMap;
-
+use num::integer::lcm;
 use nom::{
     Parser,
     IResult,
@@ -10,7 +10,6 @@ use nom::{
     bytes::complete::tag,
     multi::{count,separated_list1, many1}, sequence::{separated_pair,delimited},
 };
-use num::integer::lcm;
 
 #[derive(Clone,Copy,Debug)]
 enum Direction {
@@ -77,6 +76,7 @@ fn parse_location(input: &str) -> IResult<&str,Location> {
         .parse(input)
 }
 
+#[inline]
 fn parse_location_letter<'a>(input: &'a str) -> IResult<&'a str, u8> {
     alt((
             one_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
@@ -103,6 +103,7 @@ fn find_cycle_len_p1(input: &DesertMap, start: &Location) -> u64 {
     counter
 }
 
+#[inline]
 fn find_cycle_len_p2(input: &DesertMap, start: &Location) -> u64 {
     let mut counter: u64 = 0;
     let mut current_loc = start;
@@ -152,7 +153,7 @@ GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)";
 
     #[test]
-    fn test_day8_parser() {
+    fn day8_parser() {
         let input = input_generator(TEST_INPUT1);
         assert_eq!(input.dirs.len(), 2);
         assert_eq!(input.map.len(), 7);
@@ -160,7 +161,7 @@ ZZZ = (ZZZ, ZZZ)";
     }
     
     #[test]
-    fn test_solve_day8p1_1() {
+    fn day8_solve_p1_1() {
         let input = input_generator(TEST_INPUT1);
         let ans = solve_part1(&input);
         assert_eq!(ans, 2);
@@ -173,7 +174,7 @@ BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)";
 
     #[test]
-    fn test_solve_day8p1_2() {
+    fn day8_solve_p1_2() {
         let input = input_generator(TEST_INPUT2);
         let ans = solve_part1(&input);
         assert_eq!(ans, 6);
@@ -190,15 +191,14 @@ ZZZ = (ZZZ, ZZZ)";
 22Z = (22B, 22B)
 XXX = (XXX, XXX)";
     #[test]
-    fn test_solve_day8_p2() {
+    fn day8_solve_p2() {
         let input = input_generator(TEST_INPUT3);
         let ans = solve_part2(&input);
         assert_eq!(ans, 6);
     }
 
-    use num::integer::lcm;
     #[test]
-    fn test_lcm() {
+    fn day8_lcm() {
         assert_eq!(lcm(3, 7), 21);
         assert_eq!(lcm(3, 6), 6);
     }

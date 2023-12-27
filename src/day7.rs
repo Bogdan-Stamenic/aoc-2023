@@ -210,6 +210,7 @@ fn parse_line(input: &str) -> IResult<&str,CamelCardsHand> {
         .parse(input)
 }
 
+#[inline]
 fn parse_camel_cards(input: &str) -> IResult<&str, Vec<CamelCard>> {
     count(
         alt((
@@ -224,6 +225,7 @@ fn parse_camel_cards(input: &str) -> IResult<&str, Vec<CamelCard>> {
         .parse(input)
 }
 
+#[inline]
 fn parse_num(input: &str) -> IResult<&str, u64> {
     take_while1(char::is_numeric)
         .map(|x: &str| x.parse::<u64>().unwrap())
@@ -257,11 +259,10 @@ pub fn solve_part2(input: &[CamelCardsHand]) -> u64 {
 #[cfg(test)]
 mod tests {
     use std::cmp::Ordering;
-
     use super::*;
 
 #[test]
-    fn test_camel_card() {
+    fn day7_camel_card() {
         assert_eq!(CamelCard::A > CamelCard::K, true);
         assert_eq!(CamelCard::Num(8) > CamelCard::Num(2), true);
     }
@@ -272,7 +273,7 @@ KTJJT 220
 QQQJA 483";
 
     #[test]
-    fn test_day7_parser() {
+    fn day7_parser() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input[0],
             CamelCardsHand {cards: vec![CamelCard::Num(3), CamelCard::Num(2),
@@ -286,7 +287,7 @@ QQQJA 483";
     }
     
     #[test]
-    fn test_camel_cards_ordering_p1() {
+    fn day7_camel_cards_ordering_p1() {
         let a = CamelCardsHand {
             cards: vec![CamelCard::A,CamelCard::A,CamelCard::A,CamelCard::A,CamelCard::A],
             bid_value: 69};
@@ -311,7 +312,7 @@ QQQJA 483";
     }
 
     #[test]
-    fn test_camel_cards_ordering_p2() {
+    fn day7_camel_cards_ordering_p2() {
             let a = CamelCardsHand {
                 cards: vec![CamelCard::Num(3),CamelCard::Num(2),CamelCard::T,CamelCard::Num(3),
                 CamelCard::K], bid_value: 765};
@@ -353,7 +354,7 @@ QQQJA 483";
     }
 
     #[test]
-    fn test_camel_cards_sorting() {
+    fn day7_camel_cards_sorting() {
         let mut input = vec![
             CamelCardsHand {
                 cards: vec![CamelCard::Num(3),CamelCard::Num(2),CamelCard::T,CamelCard::Num(3),
@@ -394,14 +395,14 @@ QQQJA 483";
     }
 
     #[test]
-    fn test_solve_day7p1_1() {
+    fn day7_solve_p1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
         assert_eq!(ans,6440);
     }
 
     #[test]
-    fn test_solve_day7_p2() {
+    fn day7_solve_p2() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part2(&input);
         assert_eq!(ans,5905);

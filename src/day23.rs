@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use petgraph::{prelude::{DiGraphMap,UnGraphMap}, algo::simple_paths::all_simple_paths};
 
-#[allow(dead_code)]
 #[derive(Clone,Debug)]
 pub struct HikingTrailP1 {
     path: DiGraphMap<(usize,usize), ()>,
@@ -9,7 +8,6 @@ pub struct HikingTrailP1 {
     end: (usize, usize),
 }
 
-#[allow(dead_code)]
 #[derive(Clone,Debug)]
 pub struct HikingTrailP2 {
     path: UnGraphMap<(usize,usize), u64>,
@@ -134,13 +132,40 @@ fn graph_for_p2(input: &Vec<Vec<u8>>) -> HikingTrailP2 {
         .map(|(idx,_)| (input.len() - 1, idx))
         .next().unwrap();
     /* Reduce nodes to make solution more computationally feasible */
-    let out_graph = prune_graph_for_p2(hiking_trail);
+    let out_graph = calc_pruned_graph_for_p2(hiking_trail);
     HikingTrailP2 { path: out_graph, start: start_node, end: end_node }
-    //HikingTrailP2 { path: hiking_trail, start: start_node, end: end_node }
 }
 
-#[allow(dead_code)]
-fn prune_graph_for_p2(graph: UnGraphMap::<(usize,usize), u64>) -> UnGraphMap::<(usize,usize),u64> {
+#[inline]
+fn connect_path(hiking_trail: &mut UnGraphMap::<(usize,usize), u64>,
+    trail: &Vec<Vec<u8>>, i: usize, j: usize) {
+    let outer_max = trail.len() - 1;
+    let inner_max = trail[0].len() - 1;
+    unsafe {
+        if j > 0 {
+            if *trail.get_unchecked(i).get_unchecked(j-1) != b'#' {
+                hiking_trail.add_edge((i,j), (i,j-1), 1);
+            }
+        }
+        if j < inner_max {
+            if *trail.get_unchecked(i).get_unchecked(j+1) != b'#' {
+                hiking_trail.add_edge((i,j), (i,j+1), 1);
+            }
+        }
+        if i < outer_max {
+            if *trail.get_unchecked(i+1).get_unchecked(j) != b'#' {
+                hiking_trail.add_edge((i,j), (i+1,j), 1);
+            }
+        }
+        if i > 0 {
+            if *trail.get_unchecked(i-1).get_unchecked(j) != b'#' {
+                hiking_trail.add_edge((i,j), (i-1,j), 1);
+            }
+        }
+    }
+}
+
+fn calc_pruned_graph_for_p2(graph: UnGraphMap::<(usize,usize), u64>) -> UnGraphMap::<(usize,usize),u64> {
     let mut out_graph = UnGraphMap::<(usize,usize), u64>::new();
     let junctions = graph.nodes()
         .filter(|n| graph.neighbors(*n).count() != 2)
@@ -159,41 +184,14 @@ fn prune_graph_for_p2(graph: UnGraphMap::<(usize,usize), u64>) -> UnGraphMap::<(
                 }
                 visited.insert(curr_node);
                 dist += 1;
-                let new_curr_node = graph.neighbors(curr_node)
+                curr_node = graph.neighbors(curr_node)
                     .filter(|x| {
                         !visited.contains(x)
                     }).next().unwrap();
-                curr_node = new_curr_node;
             }
         }
     }
     out_graph
-}
-
-fn connect_path(hiking_trail: &mut UnGraphMap::<(usize,usize), u64>,
-    trail: &Vec<Vec<u8>>, i: usize, j: usize) {
-    let outer_max = trail.len() - 1;
-    let inner_max = trail[0].len() - 1;
-    if j > 0 {
-        if trail[i][j-1] != b'#' {
-            hiking_trail.add_edge((i,j), (i,j-1), 1);
-        }
-    }
-    if j < inner_max {
-        if trail[i][j+1] != b'#' {
-            hiking_trail.add_edge((i,j), (i,j+1), 1);
-        }
-    }
-    if i < outer_max {
-        if trail[i+1][j] != b'#' {
-            hiking_trail.add_edge((i,j), (i+1,j), 1);
-        }
-    }
-    if i > 0 {
-        if trail[i-1][j] != b'#' {
-            hiking_trail.add_edge((i,j), (i-1,j), 1);
-        }
-    }
 }
 
 #[aoc(day23,part2)]
@@ -211,9 +209,6 @@ pub fn solve_day23_p2(input: &Vec<Vec<u8>>) -> u64 {
                 .sum()
         })
     .max().expect("no simple paths found")
-    //ways.into_iter()
-    //    .map(|path| path.len() - 1)
-    //    .max().expect("no simple paths found")
 }
 
 #[cfg(test)]

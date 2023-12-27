@@ -1,4 +1,12 @@
-use nom::{bytes::complete::{tag, take_while1}, branch::alt, combinator::{all_consuming, value}, sequence::separated_pair, IResult, multi::{separated_list0,separated_list1}, Parser};
+use nom::{
+    IResult,
+    Parser,
+    branch::alt,
+    bytes::complete::{tag, take_while1},
+    combinator::{all_consuming, value},
+    sequence::separated_pair,
+    multi::{separated_list0,separated_list1},
+    };
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct CubeColors {

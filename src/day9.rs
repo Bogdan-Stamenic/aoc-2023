@@ -9,6 +9,7 @@ pub fn input_generator(input: &str) -> Vec<Vec<i64>> {
     .collect()
 }
 
+#[inline]
 fn extrapolate_for_p1(input: &[i64]) -> i64 {
     let mut seq = input.to_vec();
     let mut history = Vec::<i64>::new();
@@ -54,12 +55,13 @@ pub fn solve_part2(input: &[Vec<i64>]) -> i64 {
 mod tests {
     use super::*;
 
-    const TEST_INPUT: &str = "0 3 6 9 12 15
+    const TEST_INPUT: &str =
+"0 3 6 9 12 15
 1 3 6 10 15 21
 10 13 16 21 30 45";
 
     #[test]
-    fn test_day9_parser() {
+    fn day9_parser() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.len(), 3);
         assert_eq!(input[0].len(), 6);
@@ -67,7 +69,7 @@ mod tests {
     }
 
     #[test]
-    fn test_extrapolate_for_p1() {
+    fn day9_extrapolate_for_p1() {
         let input1 = vec![0, 3, 6, 9, 12, 15];
         let ans1 = extrapolate_for_p1(&input1);
         assert_eq!(ans1, 18);
@@ -80,14 +82,14 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_day9p1_1() {
+    fn day9_solve_p1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
         assert_eq!(ans, 114);
     }
 
     #[test]
-    fn test_extrapolate_for_p2() {
+    fn day9_extrapolate_for_p2() {
         let input1 = vec![0, 3, 6, 9, 12, 15];
         let ans1 = extrapolate_for_p2(&input1);
         assert_eq!(ans1, -3);
@@ -100,7 +102,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_day9_p2() {
+    fn day9_solve_p2() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part2(&input);
         assert_eq!(ans, 2);

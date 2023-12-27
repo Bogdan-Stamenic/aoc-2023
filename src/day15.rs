@@ -142,13 +142,13 @@ mod tests {
     const TEST_INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7";
 
     #[test]
-    fn test_solve_day15_p1() {
+    fn day15_solve_p1() {
         let ans = solve_part1(TEST_INPUT);
         assert_eq!(ans, 1320);
     }
 
     #[test]
-    fn test_hashmap_protocoll() {
+    fn day15_hashmap_protocoll() {
         let input = parse_hash_instruction(TEST_INPUT);
         let ans = hashmap_protocoll_for_p2(&input);
         assert_eq!(ans.len(), 256);
@@ -159,7 +159,7 @@ mod tests {
     }
     
     #[test]
-    fn test_solve_day15_p2() {
+    fn day15_solve_p2() {
         let ans = solve_part2(TEST_INPUT);
         assert_eq!(ans, 145);
     }

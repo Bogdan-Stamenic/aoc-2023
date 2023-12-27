@@ -3,6 +3,7 @@ pub fn input_generator(input: &str) -> String {
     input.to_string()
 }
 
+#[inline]
 fn get_first_and_last_digit(line: &str) -> (u32, u32) {
     let first = line
         .bytes()

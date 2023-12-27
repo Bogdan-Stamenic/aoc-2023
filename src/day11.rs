@@ -120,6 +120,7 @@ pub fn solve_part1(input: &Array2<Space>) -> u64 {
     ans
 }
 
+#[inline]
 fn calc_galaxy_dist(x0: (usize,usize), x1: (usize,usize),
     empty_rows_lst: &[usize], empty_columns_lst: &[usize],
     empty_space_size: usize) -> u64 {
@@ -166,7 +167,8 @@ pub fn solve_part2(input: &Array2<Space>) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const TEST_INPUT: &str = "...#......
+    const TEST_INPUT: &str =
+"...#......
 .......#..
 #.........
 ..........
@@ -178,21 +180,21 @@ mod tests {
 #...#.....";
 
       #[test]
-      fn test_find_empty_rows() {
+      fn day11_find_empty_rows() {
           let input = input_generator(TEST_INPUT);
           let ans = find_empty_rows(&input);
           assert_eq!(ans, vec![3,7]);
       }
       
       #[test]
-      fn test_find_empty_columns() {
+      fn day11_find_empty_columns() {
           let input = input_generator(TEST_INPUT);
           let ans = find_empty_columns(&input);
           assert_eq!(ans, vec![2,5,8]);
       }
 
       #[test]
-      fn test_expand_space_p1() {
+      fn day11_expand_space_p1() {
           let input = input_generator(TEST_INPUT);
           let ans = expand_input_p1(&input);
           assert_eq!(ans.dim(), (12,13));
@@ -200,7 +202,7 @@ mod tests {
       }
 
       #[test]
-      fn test_solve_day11_p1() {
+      fn day11_solve_day11_p1() {
           let input = input_generator(TEST_INPUT);
           let ans = solve_part1(&input);
           assert_eq!(ans, 374);
@@ -219,7 +221,7 @@ mod tests {
       }
 
       #[test]
-      fn test_calc_sum_of_galaxy_dists() {
+      fn day11_calc_sum_of_galaxy_dists() {
           let input = input_generator(TEST_INPUT);
           let ans1 = calc_sum_of_galaxy_dists(&input, 10);
           let ans2 = calc_sum_of_galaxy_dists(&input, 100);

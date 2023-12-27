@@ -111,6 +111,7 @@ pub fn solve_part1(input: &Array2<SchematicEntry>) -> u64 {
     ans
 }
 
+#[inline]
 fn consume_char_stack_to_u64(char_stack: &mut Vec<char>) -> u64 {
     let my_str = char_stack.iter().collect::<String>();
     char_stack.clear();
@@ -119,7 +120,7 @@ fn consume_char_stack_to_u64(char_stack: &mut Vec<char>) -> u64 {
 
 fn check_above_and_below_for_symbol(input: &Array2<SchematicEntry>, (x,y): (usize,usize)) -> bool {
     let start = if x == 0 {
-        x.clamp(0, input.dim().0)
+        0
     } else {
         (x - 1).clamp(0, input.dim().0)
     };
@@ -143,7 +144,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_schematic_line() {
+    fn day3_parse_schematic_line() {
         const INPUT: &str = ".....+.58.
 617*......";
         let ans = parse_schematic_line(INPUT);
@@ -175,7 +176,7 @@ mod tests {
 ...$.*....
 .664.598..";
     #[test]
-    fn test_input_generator() {
+    fn day3_input_generator() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.dim(),(10,10));
         assert_eq!(input[[0,1]],SchematicEntry::Number('6'));
@@ -189,7 +190,7 @@ mod tests {
     }
 
     #[test]
-    fn test_char_stack_to_u64() {
+    fn day3_char_stack_to_u64() {
         let mut input = vec!['1', '2', '3'];
         let ans = consume_char_stack_to_u64(&mut input);
         assert_eq!(ans, 123);
@@ -197,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_above_and_below_for_symbol_1() {
+    fn day3_check_above_and_below_for_symbol_1() {
         let input = input_generator(TEST_INPUT);
         let ans1 = check_above_and_below_for_symbol(&input, (0,1));
         let ans2 = check_above_and_below_for_symbol(&input, (1,1));
@@ -217,14 +218,14 @@ mod tests {
 
 
     #[test]
-    fn test_solve_day3_p1_1() {
+    fn day3_solve_p1_1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
         assert_eq!(ans, 4361);
     }
 
     #[test]
-    fn test_solve_day3_p1_2() {
+    fn day3_solve_p1_2() {
         const INPUT: &str = ".....
 ..123
 +....";
@@ -234,7 +235,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_day3_p1_3() {
+    fn day3_solve_p1_3() {
         const INPUT: &str = ".....
 ..123
 4+...";
@@ -244,7 +245,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_day3_p1_4() {
+    fn day3_solve_p1_4() {
         const INPUT: &str = "......
 ...123
 4+....";
@@ -253,6 +254,6 @@ mod tests {
         assert_eq!(ans,4);
     }
 //    #[test]
-//    fn test_solve_day3_p2() {
+//    fn day3_solve_p2() {
 //    }
 }

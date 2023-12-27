@@ -121,7 +121,7 @@ pub fn solve_part2(input: &[ScratchCard]) -> u32 {
 mod tests {
     use super::*;
     #[test]
-    fn test_parse_scratch_numbers() {
+    fn day4_parse_scratch_numbers() {
         const INPUT: &str = "41 48 83 86 17 | 83 86  6 31 17  9 48 53";
         let (str, (win, my)) = parse_scratch_nums(INPUT).unwrap();
         assert_eq!(str, "");
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_scratch_card() {
+    fn day4_parse_scratch_card() {
         const INPUT: &str = "Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1";
         let (str, card) = parse_scratch_card(INPUT).unwrap();
         assert_eq!(str, "");
@@ -139,28 +139,30 @@ mod tests {
         assert_eq!(card.my_numbers.contains(&82), true);
     }
 
-    const TEST_INPUT: &str = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+    const TEST_INPUT: &str =
+"Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
 Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
 Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
 Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
 Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
 Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
     #[test]
-    fn test_day4_parser() {
+    fn day4_parser() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.len(), 6)
     }
 
     #[test]
-    fn test_solve_day4p1_1() {
+    fn day4_solve_p1_1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
         assert_eq!(ans, 13)
     }
 
     #[test]
-    fn test_solve_day4p1_2() {
-        const INPUT: &str = "Card   1: 13  5 40 15 21 61 74 55 32 56 | 21 57 74 56  7 84 37 47 75 66 68  8 55 22 53 61 40 13 15 41 32 46 95 65  5
+    fn day4_solve_p1_2() {
+        const INPUT: &str =
+"Card   1: 13  5 40 15 21 61 74 55 32 56 | 21 57 74 56  7 84 37 47 75 66 68  8 55 22 53 61 40 13 15 41 32 46 95 65  5
 Card   2: 92 97 39 23 25 40 33 70 55 77 | 25 70 23 91 45 60 34 56 82  6  9 62 24  3 67 99 18 58  1 26 50 37 32 14 85";
         let input = input_generator(INPUT);
         let ans = solve_part1(&input);
@@ -168,7 +170,7 @@ Card   2: 92 97 39 23 25 40 33 70 55 77 | 25 70 23 91 45 60 34 56 82  6  9 62 24
     }
 
     #[test]
-    fn test_solve_day4_p2() {
+    fn day4_solve_p2() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part2(&input);
         assert_eq!(ans, 30)

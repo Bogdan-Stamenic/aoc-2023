@@ -47,6 +47,7 @@ fn parse_platform_line(input: &str) -> IResult<&str, Array1<RockType>> {
         .parse(input)
 }
 
+#[inline]
 fn parse_platform_entry(input: &str) -> IResult<&str, RockType>{
     alt((
             value(RockType::Empty, tag(".")),
@@ -66,7 +67,7 @@ fn pretty_print(input: Array2<RockType>) {
     }
 }
 
-#[allow(dead_code)]
+#[inline]
 fn tilt_north(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     let (row_max, col_max) = input.dim();
     for col_idx in 0..col_max {
@@ -89,7 +90,7 @@ fn tilt_north(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     }
 }
 
-#[allow(dead_code)]
+#[inline]
 fn tilt_south(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     let (row_max, col_max) = input.dim();
     for col_idx in 0..col_max {
@@ -112,7 +113,7 @@ fn tilt_south(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     }
 }
 
-#[allow(dead_code)]
+#[inline]
 fn tilt_west(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     let (row_max, col_max) = input.dim();
     for row_idx in 0..row_max {
@@ -135,7 +136,7 @@ fn tilt_west(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     }
 }
 
-#[allow(dead_code)]
+#[inline]
 fn tilt_east(input: &Array2<RockType>, out: &mut Array2<RockType>) {
     let (row_max, col_max) = input.dim();
     for row_idx in 0..row_max {
@@ -223,7 +224,8 @@ pub fn solve_part2(input: &Array2<RockType>) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const TEST_INPUT: &str = "O....#....
+    const TEST_INPUT: &str =
+"O....#....
 O.OO#....#
 .....##...
 OO.#O....O
@@ -235,14 +237,14 @@ O.#..O.#.#
 #OO..#....";
 
     #[test]
-    fn test_input_generator() {
+    fn day14_input_generator() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.dim(),(10,10));
     }
 
     #[test]
     #[ignore = "Only pretty prints"]
-    fn test_tilt_north() {
+    fn day14_tilt_north() {
         let input = input_generator(TEST_INPUT);
         let mut out = input.clone();
         tilt_north(&input, &mut out);
@@ -251,7 +253,7 @@ O.#..O.#.#
 
     #[test]
     #[ignore = "Only pretty prints"]
-    fn test_tilt_west() {
+    fn day14_tilt_west() {
         let input = input_generator(TEST_INPUT);
         let mut out = input.clone();
         tilt_west(&input, &mut out);
@@ -260,7 +262,7 @@ O.#..O.#.#
 
     #[test]
     #[ignore = "Only pretty prints"]
-    fn test_tilt_south() {
+    fn day14_tilt_south() {
         let input = input_generator(TEST_INPUT);
         let mut out = input.clone();
         tilt_south(&input, &mut out);
@@ -269,7 +271,7 @@ O.#..O.#.#
 
     #[test]
     #[ignore = "Only pretty prints"]
-    fn test_tilt_east() {
+    fn day14_tilt_east() {
         let input = input_generator(TEST_INPUT);
         let mut out = input.clone();
         tilt_east(&input, &mut out);
@@ -278,7 +280,7 @@ O.#..O.#.#
 
     #[test]
     #[ignore = "Only pretty prints"]
-    fn test_one_cycle() {
+    fn day14_one_cycle() {
         let mut input = input_generator(TEST_INPUT);
         let mut out = input.clone();
         one_cycle_for_p2(&mut input, &mut out);
@@ -288,14 +290,14 @@ O.#..O.#.#
     }
 
     #[test]
-    fn test_find_cycle_len() {
+    fn day14_find_cycle_len() {
         let mut input = input_generator(TEST_INPUT);
         let ans = find_cycle_len(&mut input);
         assert_eq!(ans, 64);
     }
 
     #[test]
-    fn test_solve_day12_p1() {
+    fn day14_solve_p1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
         assert_eq!(ans, 136);

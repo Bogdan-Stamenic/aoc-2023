@@ -6,7 +6,8 @@ use nom::{
     branch::alt,
     combinator::all_consuming,
     bytes::complete::{tag, take_while1},
-    multi::{separated_list1, many_till, many1}, sequence::{separated_pair, preceded, tuple},
+    multi::{separated_list1, many_till, many1},
+    sequence::{separated_pair, preceded, tuple},
 };
 
 #[derive(Clone,Debug)]
@@ -259,7 +260,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_seeds() {
+    fn day5_parse_seeds() {
         const INPUT: &str = "seeds: 79 14 55 13
 42 69 5
 
@@ -269,7 +270,7 @@ seed-to-soil map:";
     }
 
     #[test]
-    fn test_parse_one_almanac_map_1() {
+    fn day5_parse_one_almanac_map_1() {
         const INPUT: &str = "seed-to-soil map:
 50 98 2
 52 50 48
@@ -288,7 +289,7 @@ soil-to-fertilizer map:";
     }
 
     #[test]
-    fn test_parse_one_almanac_map_2() {
+    fn day5_parse_one_almanac_map_2() {
         const INPUT: &str = "seed-to-soil map:
 50 98 2
 52 50 48";
@@ -339,7 +340,7 @@ humidity-to-location map:
 56 93 4";
 
     #[test]
-    fn test_day5_parser() {
+    fn day5_parser() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.seeds, vec![79,14,55,13]);
         assert_eq!(input.almanac_maps.len(), 7);
@@ -352,21 +353,21 @@ humidity-to-location map:
     }
 
     #[test]
-    fn test_solve_day5p1_1() {
+    fn day5_solve_p1_1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
         assert_eq!(ans, 35)
     }
 
     //#[test]
-    //fn test_solve_day5_p2() {
+    //fn day5_solve_p2() {
     //    let input = input_generator(TEST_INPUT);
     //    let ans = solve_part2(&input);
     //    assert_eq!(ans, 46)
     //}
 
     #[test]
-    fn test_interval_splitting() {
+    fn day5_interval_splitting() {
         let ans1 = AlmanacMap::split_interval_for_mapping((2,42), (16,25));
         let ans2 = AlmanacMap::split_interval_for_mapping((10,20), (18,25));
         let ans3 = AlmanacMap::split_interval_for_mapping((46,57), (56,93));

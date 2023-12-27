@@ -1,5 +1,4 @@
 use std::iter::zip;
-
 use nom::{
     Parser,
     IResult,
@@ -116,11 +115,12 @@ pub fn solve_part2(input: &[BoatRacePair]) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const TEST_INPUT: &str = "Time:      7  15   30
+    const TEST_INPUT: &str =
+"Time:      7  15   30
 Distance:  9  40  200";
 
     #[test]
-    fn test_day6_parser() {
+    fn day6_parser() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.len(),3);
         assert_eq!(input[0].time,7);
@@ -128,14 +128,14 @@ Distance:  9  40  200";
     }
     
     #[test]
-    fn test_function_with_the_long_name() {
+    fn day6_function_with_the_long_name() {
         let input = BoatRacePair {time: 7, distance: 9};
         let ans = calc_num_possible_winning_boat_button_push_times(&input);
         assert_eq!(ans,4);
     }
 
     #[test]
-    fn test_join_nums_for_p2() {
+    fn day6_join_nums_for_p2() {
         let input = input_generator(TEST_INPUT);
         let ans = join_nums_for_p2(&input);
         assert_eq!(ans, BoatRacePair {time: 71530, distance: 940200})
@@ -146,7 +146,7 @@ Distance:  9  40  200";
     //}
 
     #[test]
-    fn test_solve_day6p2() {
+    fn day6_solve_p2() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part2(&input);
         assert_eq!(ans,71503);

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use itertools::Itertools;
-
 use nom::{
     Parser,
     IResult,
@@ -218,20 +217,21 @@ pub fn solve_part2(input: &[SpringConditionRecord]) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const TEST_INPUT: &str = "???.### 1,1,3
+    const TEST_INPUT: &str =
+"???.### 1,1,3
 .??..??...?##. 1,1,3
 ?#?#?#?#?#?#?#? 1,3,1,6
 ????.#...#... 4,1,1
 ????.######..#####. 1,6,5
 ?###???????? 3,2,1";
     #[test]
-    fn test_input_generator() {
+    fn day12_input_generator() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.len(), 6);
     }
 
     #[test]
-    fn test_count_possibilities_1() {
+    fn day12_count_possibilities_1() {
         let record = "???.###";
         let hints = vec![1, 1, 3];
         let ans = count_possibilities(&hints, &record, 0);
@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_count_possibilities_2() {
+    fn day12_count_possibilities_2() {
         let record = ".??..??...?##.";
         let hints = vec![1, 1, 3];
         let ans = count_possibilities(&hints, &record, 0);
@@ -247,7 +247,7 @@ mod tests {
     }
     
     #[test]
-    fn test_count_possibilities_3() {
+    fn day12_count_possibilities_3() {
         let record = "?###????????";
         let hints = vec![3, 2, 1];
         let ans = count_possibilities(&hints, &record, 0);
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_count_possibilities_4() {
+    fn day12_count_possibilities_4() {
         let record = "#.#";
         let hints = vec![2];
         let ans = count_possibilities(&hints, &record, 0);
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_count_possibilities_5() {
+    fn day12_count_possibilities_5() {
         let record = "##??";
         let hints = vec![2, 1];
         let ans = count_possibilities(&hints, &record, 1);
@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_count_possibilities_6() {
+    fn day12_count_possibilities_6() {
         let record = "#.###";
         let hints = vec![3];
         let ans = count_possibilities(&hints, &record, 0);
@@ -283,7 +283,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_count_possibilities_7() {
+    fn day12_count_possibilities_7() {
         let record = "??###";
         let hints = vec![3];
         let ans = count_possibilities(&hints, &record, 0);
@@ -292,7 +292,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_count_possibilities_8() {
+    fn day12_count_possibilities_8() {
         let record = ".?###";
         let hints = vec![3];
         let ans = count_possibilities(&hints, &record, 0);
@@ -300,7 +300,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_day12_p1() {
+    fn day12_solve_day12_p1() {
         let input1 = input_generator(TEST_INPUT);
         let ans = solve_part1(&input1);
         assert_eq!(ans, 21);
@@ -308,14 +308,14 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_solve_day12_p1_memoized() {
+    fn day12_solve_p1_memoized() {
         let input1 = input_generator(TEST_INPUT);
         let ans = solve_part1(&input1);
         assert_eq!(ans, 21);
     }
 
     #[test]
-    fn test_solve_day12_p2() {
+    fn day12_solve_p2() {
         let input2 = input_generator(TEST_INPUT);
         let ans = solve_part2(&input2);
         assert_eq!(ans, 525152);
