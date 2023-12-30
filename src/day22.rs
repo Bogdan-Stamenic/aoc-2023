@@ -10,8 +10,8 @@ use nom::{
 
 #[derive(Clone,Debug,Default)]
 struct BrickAdjNode {
-    below_set: HashSet<usize>,//all brick beneath current one
-    above_set: HashSet<usize>,//all brick above current one
+    below_set: HashSet<usize>,//all bricks beneath current one
+    above_set: HashSet<usize>,//all bricks above current one
 }
 
 #[allow(dead_code)]
@@ -71,9 +71,11 @@ fn parse_num_to_u32(input: &str) -> IResult<&str, u32> {
 
 /* Expects bricks to be sorted in ascending z1 order */
 #[inline]
-fn drop_and_stack_all_bricks(falling_bricks: Vec<(usize,(u32,u32,u32),(u32,u32,u32))>,
+fn drop_and_stack_all_bricks(
+    falling_bricks: Vec<(usize,(u32,u32,u32),(u32,u32,u32))>,
     space: &mut HashMap<(u32,u32,u32),usize>)
-    -> Vec<(usize,(u32,u32,u32),(u32,u32,u32))> {
+    -> Vec<(usize,(u32,u32,u32),(u32,u32,u32))>
+{
     let mut pile_of_bricks = Vec::<(usize, (u32,u32,u32), (u32,u32,u32))>::new();
     for brick in falling_bricks.into_iter() {
         let (brick_id, mut p1, mut p2) = brick;
@@ -91,9 +93,11 @@ fn drop_and_stack_all_bricks(falling_bricks: Vec<(usize,(u32,u32,u32),(u32,u32,u
 }
 
 #[inline]
-fn calc_brick_adjacency(bricks_vec: &[(usize, (u32,u32,u32), (u32,u32,u32))],
+fn calc_brick_adjacency(
+    bricks_vec: &[(usize,(u32,u32,u32),(u32,u32,u32))],
     space: &HashMap<(u32,u32,u32), usize>)
-    -> Vec<BrickAdjNode> {
+    -> Vec<BrickAdjNode>
+{
     let mut adjacent = vec![BrickAdjNode::default(); bricks_vec.len()];
     for (brick_id, (x1,y1,z1), (x2,y2,_)) in bricks_vec.iter() {
         for (x,y) in (*x1..=*x2).cartesian_product(*y1..=*y2) {

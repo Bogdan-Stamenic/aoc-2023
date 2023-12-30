@@ -256,10 +256,10 @@ pub fn solve_part1(input: &Mirrors) -> usize {
 #[aoc(day16, part2)]
 pub fn solve_part2(input: &Mirrors) -> usize {
     let Mirrors {graph: gr, outer_max:om, inner_max:im} = input;
-    let top_sources = (1..*im-1).map(|x| (0, x));
-    let left_sources = (1..*om-1).map(|x| (x,0));
-    let right_sources = (1..*om-1).map(|x| (x,*im));
-    let bottom_sources = (1..*im-1).map(|x| (*om,x));
+    let top_sources = (1..*im).map(|x| (0, x));
+    let left_sources = (1..*om).map(|x| (x,0));
+    let right_sources = (1..*om).map(|x| (x,*im));
+    let bottom_sources = (1..*im).map(|x| (*om,x));
     let src_nodes = top_sources.chain(left_sources).chain(right_sources).chain(bottom_sources);
     src_nodes.map(|x|
         count_illuminated_tiles(&gr, *om, *im, MirrorNode { coords: x, beam_from: IncidenceDirection::Source })
@@ -286,10 +286,13 @@ r".|...\....
     fn day16_solve_p1() {
         let input = input_generator(TEST_INPUT);
         let ans = solve_part1(&input);
-        assert_eq!(ans, 100);
+        assert_eq!(ans, 46);
     }
 
-    //#[test]
-    //fn day16_solve_p2() {
-    //}
+    #[test]
+    fn day16_solve_p2() {
+        let input = input_generator(TEST_INPUT);
+        let ans = solve_part2(&input);
+        assert_eq!(ans, 51);
+    }
 }

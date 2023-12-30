@@ -204,35 +204,35 @@ L 2 (#015232)
 U 2 (#7a21e3)";
 
     #[test]
-    fn test_day18_input_generator() {
+    fn day18_input_generator() {
         let input = input_generator(TEST_INPUT);
         assert_eq!(input.len(), 14);
         assert_eq!(input[0].direction_p1, Direction::Right);
     }
 
     #[test]
-    fn test_shoelace_formula_1() {
+    fn day18_shoelace_formula_1() {
         let input = vec![(1,6), (3,1), (7,2), (4,4), (8,5),(1,6)];
         let ans = apply_shoelace_formula(&input);
         assert_eq!(ans, 16);
     }
 
     #[test]
-    fn test_shoelace_formula_2() {
+    fn day18_shoelace_formula_2() {
         let input = vec![(0,0),(0,1),(1,1),(1,0)];
         let ans = apply_shoelace_formula(&input);
         assert_eq!(ans, 1);
     }
 
     #[test]
-    fn test_shoelace_formula_3() {
+    fn day18_shoelace_formula_3() {
         let input = vec![(0,0), (7,0), (7,10),(0,10),(0,0)];
         let ans = apply_shoelace_formula(&input);
         assert_eq!(ans, 70);
     }
 
     #[test]
-    fn test_instrs_to_coords() {
+    fn day18_instrs_to_coords() {
         let input = input_generator(TEST_INPUT);
         let ans = trench_instructions_to_nodes_p1(&input);
         assert_eq!(ans,

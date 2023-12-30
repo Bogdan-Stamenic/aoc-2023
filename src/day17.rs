@@ -139,7 +139,7 @@ fn connect_edges_p2(graph: &mut DiGraphMap<HeatlossNode,u32>, grid: &Vec<Vec<u32
             for dist_travelled in 1..=10 {
                 /* curent node */
                 let foo = HeatlossNode {coords: (i,j), dir: *direction, travelled: dist_travelled};
-                /* Don't go out of bounds && No 180° turns && Don't travel more than 3 tiles in one
+                /* Don't go out of bounds && No 180° turns && Always travel between 4 and 10 tiles in one
                  * direction*/
                 if (i < grid.len() - 1) && (*direction != Direction::Up) && p2_dist_check(&foo, Direction::Down){
                     let new_travelled = calc_dist_travelled(direction, Direction::Down, dist_travelled);
@@ -184,7 +184,6 @@ pub fn solve_part2(input: &str) -> u32 {
     let (input, last_node) = input;
     let strt = HeatlossNode {coords: (0,0), dir: Direction::Start, travelled: 0};
     let ans = dijkstra(&input, strt, None, |edge_ref| *edge_ref.2);
-    println!("{}", ans.is_empty());
     ans.into_iter()
         .filter(|el| el.0.coords == last_node)
         .map(|el| el.1)
@@ -194,7 +193,8 @@ pub fn solve_part2(input: &str) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    const TEST_INPUT: &str = "2413432311323
+    const TEST_INPUT: &str =
+"2413432311323
 3215453535623
 3255245654254
 3446585845452
@@ -217,7 +217,8 @@ mod tests {
 
     #[test]
     fn day17_p1_2() {
-        const INPUT: &str ="11999
+        const INPUT: &str =
+"11999
 91199
 99119
 99911";
@@ -228,7 +229,8 @@ mod tests {
     /* Can go 3 tiles in one direction, but no further */
     #[test]
     fn day17_p1_3() {
-        const INPUT: &str ="10000
+        const INPUT: &str =
+"10000
 99110
 99110
 99010
@@ -245,7 +247,8 @@ mod tests {
     /* Can snake back and forth */
     #[test]
     fn day17_p1_4() {
-        const INPUT: &str ="000099
+        const INPUT: &str =
+"000099
 999009
 999909
 000009

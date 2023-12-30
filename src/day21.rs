@@ -1,4 +1,4 @@
-use ndarray::*;
+use ndarray::prelude::*;
 use petgraph::{prelude::UnGraphMap, algo::dijkstra};
 
 #[derive(Clone,Copy,Debug,PartialEq,Eq,PartialOrd,Ord)]

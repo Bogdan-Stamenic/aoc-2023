@@ -2,6 +2,7 @@ extern crate aoc_runner;
 
 #[macro_use]
 extern crate aoc_runner_derive;
+extern crate blas_src;
 
 pub mod day1;
 pub mod day2;
@@ -21,10 +22,11 @@ pub mod day15;
 pub mod day16;
 pub mod day17;
 pub mod day18;
-//pub mod day19;
+pub mod day19;
 pub mod day21;
 pub mod day22;
 pub mod day23;
+pub mod f128_matrix_math;
 pub mod day24;
 
 aoc_lib! {year = 2023}
