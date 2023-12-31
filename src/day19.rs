@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, cmp::{min,max}};
 use nom::{
     Parser,
     IResult,
@@ -8,13 +8,52 @@ use nom::{
     multi::separated_list1, sequence::{separated_pair, preceded, tuple, delimited}
 };
 
-#[allow(dead_code)]
 #[derive(Debug)]
 struct MachinePart{
-    x: i32,
-    m: i32,
-    a: i32,
-    s: i32,
+    x: i128,
+    m: i128,
+    a: i128,
+    s: i128,
+}
+
+impl MachinePart {
+    fn xmas_sum(&self) -> i128 {
+        self.x + self.m + self.a + self.s
+    }
+}
+
+#[derive(Clone,Copy,Debug)]
+struct MachinePartRange {
+    /* [a; b) */
+    x: (i128,i128),
+    m: (i128,i128),
+    a: (i128,i128),
+    s: (i128,i128),
+}
+
+impl MachinePartRange {
+    fn count_possible(&self) -> i128 {
+        (self.x.1 - self.x.0)
+        * (self.m.1 - self.m.0)
+        * (self.a.1 - self.a.0)
+        * (self.s.1 - self.s.0)
+    }
+
+    fn any_ranges_empty(&self) -> bool {
+        (self.x.1 - self.x.0 == 0)
+        || (self.m.1 - self.m.0 == 0)
+        || (self.a.1 - self.a.0 == 0)
+        || (self.s.1 - self.s.0 == 0)
+    }
+
+    fn debug_print(&self) {
+        println!("{} * {} * {} * {}",
+            self.x.1 - self.x.0,
+            self.m.1 - self.m.0,
+            self.a.1 - self.a.0,
+            self.s.1 - self.s.0,
+            );
+    }
 }
 
 #[derive(Clone,Copy,Debug)]
@@ -26,9 +65,15 @@ enum PartProperty {
 }
 
 #[derive(Debug,PartialEq,Eq)]
+enum TestResult {
+    Jump(String),
+    Continue,
+}
+
+#[derive(Debug,PartialEq,Eq)]
 enum WorkflowTest {
-    LessThan(i32),
-    GreaterThan(i32),
+    LessThan(i128),
+    GreaterThan(i128),
 }
 
 #[allow(dead_code)]
@@ -39,6 +84,146 @@ struct WorkflowRule {
     jmp: String,
 }
 
+impl WorkflowRule {
+    fn apply(&self, input: &MachinePart) -> TestResult {
+        let passes_test = match self.property {
+            PartProperty::X => self.apply_rule(input.x),
+            PartProperty::M => self.apply_rule(input.m),
+            PartProperty::A => self.apply_rule(input.a),
+            PartProperty::S => self.apply_rule(input.s),
+        };
+        if passes_test {
+            return TestResult::Jump(self.jmp.clone().clone());
+        }
+        TestResult::Continue
+    }
+
+    fn apply_rule(&self, prop: i128) -> bool {
+        match self.test {
+            WorkflowTest::LessThan(val) => {prop < val},
+            WorkflowTest::GreaterThan(val) => {prop > val},
+        }
+    }
+
+    fn split_range(&self, input: &mut MachinePartRange, stack: &mut Vec<(String,MachinePartRange)>)
+    {
+        match self.property
+        {
+            PartProperty::X => self.split_range_by_x(input, stack),
+            PartProperty::M => self.split_range_by_m(input, stack),
+            PartProperty::A => self.split_range_by_a(input, stack),
+            PartProperty::S => self.split_range_by_s(input, stack),
+        }
+    }
+
+    fn split_range_by_x<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+        let new_x_range = match self.test {
+            WorkflowTest::LessThan(val) => {
+                let below_range = self.calc_below_range(input.x.0, input.x.1, val);
+                let above_range = self.calc_above_range(input.x.0, input.x.1, val);
+                if below_range.1 - below_range.0 > 0 {
+                        let foo = MachinePartRange {x: below_range, m: input.m.clone(),  a: input.a.clone(), s: input.s.clone()};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                above_range
+            },
+            WorkflowTest::GreaterThan(val) => {
+                let below_range = self.calc_below_range(input.x.0, input.x.1, val+1);
+                let above_range = self.calc_above_range(input.x.0, input.x.1, val+1);
+                if above_range.1 - above_range.0 > 0 {
+                        let foo = MachinePartRange {x: above_range, m: input.m.clone(),  a: input.a.clone(), s: input.s.clone()};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                below_range
+            }
+        };
+        input.x = new_x_range;
+    }
+
+    fn split_range_by_m<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+        let new_m_range = match self.test {
+            WorkflowTest::LessThan(val) => {
+                let below_range = self.calc_below_range(input.m.0, input.m.1, val);
+                let above_range = self.calc_above_range(input.m.0, input.m.1, val);
+                if below_range.1 - below_range.0 > 0 {
+                        let foo = MachinePartRange {x: input.x.clone(), m: below_range,  a: input.a.clone(), s: input.s.clone()};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                above_range
+            },
+            WorkflowTest::GreaterThan(val) => {
+                let below_range = self.calc_below_range(input.m.0, input.m.1, val+1);
+                let above_range = self.calc_above_range(input.m.0, input.m.1, val+1);
+                if above_range.1 - above_range.0 > 0 {
+                        let foo = MachinePartRange {x: input.x.clone(), m: above_range,  a: input.a.clone(), s: input.s.clone()};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                below_range
+            }
+        };
+        input.m = new_m_range;
+    }
+
+    fn split_range_by_a<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+        let new_a_range = match self.test {
+            WorkflowTest::LessThan(val) => {
+                let below_range = self.calc_below_range(input.a.0, input.a.1, val);
+                let above_range = self.calc_above_range(input.a.0, input.a.1, val);
+                if below_range.1 - below_range.0 > 0 {
+                        let foo = MachinePartRange {x: input.x.clone(), m: input.m.clone(),  a: below_range, s: input.s.clone()};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                above_range
+            },
+            WorkflowTest::GreaterThan(val) => {
+                let below_range = self.calc_below_range(input.a.0, input.a.1, val+1);
+                let above_range = self.calc_above_range(input.a.0, input.a.1, val+1);
+                if above_range.1 - above_range.0 > 0 {
+                        let foo = MachinePartRange {x: input.x.clone(), m: input.m.clone(),  a: above_range, s: input.s.clone()};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                below_range
+            }
+        };
+        input.a = new_a_range;
+    }
+
+    fn split_range_by_s<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+        let new_s_range = match self.test {
+            WorkflowTest::LessThan(val) => {
+                let below_range = self.calc_below_range(input.s.0, input.s.1, val);
+                let above_range = self.calc_above_range(input.s.0, input.s.1, val);
+                if below_range.1 - below_range.0 > 0 {
+                        let foo = MachinePartRange {x: input.x.clone(), m: input.m.clone(),  a: input.a.clone(), s: below_range};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                above_range
+            },
+            WorkflowTest::GreaterThan(val) => {
+                let below_range = self.calc_below_range(input.s.0, input.s.1, val+1);
+                let above_range = self.calc_above_range(input.s.0, input.s.1, val+1);
+                if above_range.1 - above_range.0 > 0 {
+                    let foo = MachinePartRange {x: input.x.clone(), m: input.m.clone(),  a: input.a.clone(), s: above_range};
+                        stack.push((self.jmp.clone(),foo));
+                };
+                below_range
+            }
+        };
+        input.s = new_s_range;
+    }
+
+    #[inline]
+    fn calc_below_range(&self, a: i128, b: i128, d: i128) -> (i128,i128) {
+        (min(a,d), min(b,d))
+    }
+
+    #[inline]
+    fn calc_above_range(&self, a: i128, b: i128, d: i128) -> (i128,i128) {
+        (max(a,d), max(b,d))
+    }
+
+}
+
 #[allow(dead_code)]
 #[derive(Debug)]
 struct Workflow {
@@ -47,10 +232,96 @@ struct Workflow {
 }
 
 #[allow(dead_code)]
+impl Workflow {
+    fn apply(&self, input: &MachinePart) -> String {
+        let mut next_workflow = self.default.clone();
+        for rule in self.rules.iter() {
+            match rule.apply(input) {
+                TestResult::Jump(val) => {
+                    next_workflow = val;
+                    break;
+                },
+                TestResult::Continue => {},
+            }
+        }
+        next_workflow
+    }
+
+    fn map_range<'a>(&'a self,
+        input: &'a mut MachinePartRange,
+        stack: &'a mut Vec<(String,MachinePartRange)>) {
+        for rule in self.rules.iter() {
+            rule.split_range(input,stack);
+            if input.any_ranges_empty() {
+                return;
+            }
+        }
+        stack.push((self.default.clone(),*input))
+    }
+}
+
 #[derive(Debug)]
 pub struct PartsAndWorkflows {
     workflows: HashMap<String,Workflow>,
     parts: Vec<MachinePart>,
+}
+
+impl PartsAndWorkflows {
+    fn count_accepted_parts_p1(&self) -> i128 {
+        self.parts
+            .iter()
+            .filter(|x| self.is_acceptable_p1(x))
+            .map(|x| x.xmas_sum())
+            .sum()
+    }
+
+    fn is_acceptable_p1(&self, part: &MachinePart) -> bool {
+        let mut workflow = self.workflows.get("in").unwrap();
+        loop {
+            let next_w = workflow.apply(part);
+            if next_w == "A".to_string() {
+                return true;
+            }
+            if next_w == "R".to_string() {
+                return false;
+            }
+            workflow = match self.workflows.get(&next_w)  {
+                Some(v) => v,
+                None => panic!("Workflows reached dead end"),
+            };
+        }
+    }
+
+    fn count_possibilites(&self) -> i128 {
+        let mut stack = vec![
+            ("in".to_string(), MachinePartRange {x: (1,4001), m: (1,4001), a: (1,4001), s: (1,4001)})
+        ];
+        stack.reserve(1000);
+        let mut accepted_count: i128 = 0;
+        loop {
+            let (next_workflow, mut curr_range) = match stack.pop() {
+                Some(val) => val,
+                None => break,
+            };
+            if next_workflow == "A" {
+                let inc = curr_range.count_possible();
+                accepted_count += inc;
+                if inc == 35170560000000 {
+                    curr_range.debug_print();
+                }
+                if inc == 55709440000000 {
+                    curr_range.debug_print();
+                }
+                continue;
+            }
+            if next_workflow == "R" {
+                continue;
+            }
+            let workflow = self.workflows.get(&next_workflow).unwrap();
+            workflow.map_range(&mut curr_range, &mut stack);
+        }
+        accepted_count
+    }
 }
 
 #[aoc_generator(day19)]
@@ -125,14 +396,14 @@ fn parse_property(input: &str) -> IResult<&str,PartProperty> {
 #[inline]
 fn parse_workflow_test(input: &str) -> IResult<&str,WorkflowTest> {
     alt((
-            preceded(tag("<"), parse_num_to_i32).map(|x| WorkflowTest::LessThan(x)),
-            preceded(tag(">"), parse_num_to_i32).map(|x| WorkflowTest::GreaterThan(x)),
+            preceded(tag("<"), parse_num_to_i128).map(|x| WorkflowTest::LessThan(x)),
+            preceded(tag(">"), parse_num_to_i128).map(|x| WorkflowTest::GreaterThan(x)),
             ))
         .parse(input)
 }
 
-fn parse_num_to_i32(input: &str) -> IResult<&str, i32> {
-    take_while1(|c: char| c.is_ascii_digit()).map(|x: &str| x.parse::<i32>().unwrap())
+fn parse_num_to_i128(input: &str) -> IResult<&str, i128> {
+    take_while1(|c: char| c.is_ascii_digit()).map(|x: &str| x.parse::<i128>().unwrap())
         .parse(input)
 }
 
@@ -146,7 +417,7 @@ fn parse_one_machine_part(input: &str) -> IResult<&str,MachinePart> {
         tag("{"),
         separated_list1(
             tag(","),
-            preceded(preceded(is_a("xmas"), tag("=")), parse_num_to_i32)),
+            preceded(preceded(is_a("xmas"), tag("=")), parse_num_to_i128)),
         tag("}"))
         .map(|el| {
             let mut it = el.into_iter();
@@ -157,14 +428,16 @@ fn parse_one_machine_part(input: &str) -> IResult<&str,MachinePart> {
 }
 
 
-//#[aoc(day19, part1)]
-//pub fn solve_part1(input: &Almanac) -> i64 {
-//}
+#[aoc(day19, part1)]
+pub fn solve_part1(input: &PartsAndWorkflows) -> i128 {
+    input.count_accepted_parts_p1()
+}
 
 
-//#[aoc(day19, part2)]
-//pub fn solve_part2(input: &Almanac) -> i64 {
-//}
+#[aoc(day19, part2)]
+pub fn solve_part2(input: &PartsAndWorkflows) -> i128 {
+    input.count_possibilites()
+}
 
 #[cfg(test)]
 mod tests {
@@ -187,6 +460,44 @@ hdj{m>838:A,pv}
 {x=2036,m=264,a=79,s=2244}
 {x=2461,m=1339,a=466,s=291}
 {x=2127,m=1623,a=2188,s=1013}";
+/*
+ * in -> qqz -> hdj -> pv -> A
+ * (s >= 1351,s <= 2770, m < 1801, m <= 838,a <= 1716)
+ * 4000 * 838 * 1716 * (2771 - 1351)
+ *
+ * in -> qqz -> hdj -> A 
+ * (s >= 1351,s <= 2770, m < 1801, m > 838)
+ * 4000 * (1801 - 839) * 4000 * (2771 - 1351)
+ *
+ * in -> qqz -> qs -> lnx -> A
+ * (s >= 1351,s > 2770,s <= 3448,m <= 1548)
+ * ???
+ *
+ * in -> qqz -> qs -> lnx -> A
+ * (s >= 1351,s > 2770,s <= 3448,m > 1548)
+ * ???
+ *
+ * in -> qqz -> qs -> A
+ * (s >= 1351,s > 2770,s > 3448)
+ * 4000 * 4000 * 4000 * (4001 - 3449)
+ *
+ * in -> px -> rfg -> A
+ * (s < 1351, a >= 2006, m <= 2090, s >= 537, x <= 2440)
+ * 2440 * 2090 * (4001 - 2006) * (1351 - 537)
+ *
+ * in -> px -> A
+ * (s < 1351,a >= 2006, m > 2090)
+ * 4000 * (4001 - 2091) * (4001 - 2006) * 1350
+ *
+ * in -> px -> qkq -> crn -> A
+ * (s < 1351,a < 2006,x >= 1416,x > 2662)
+ * (4001 - 2663) * 4000 * 2005 * 1350
+ *
+ * in -> px -> qkq -> A 
+ * (s < 1351,a < 2006,x < 1416) 
+ * 1415 * 4000 * 2005 * 1350
+ *
+ * */
 
     #[test]
     fn day19_input() {
@@ -195,4 +506,19 @@ hdj{m>838:A,pv}
         assert_eq!(input.parts.len(), 5);
         assert_eq!(input.workflows["px"].rules[0].test, WorkflowTest::LessThan(2006));
     }
+
+    #[test]
+    fn day19_solve_p1() {
+        let input = input_generator(TEST_INPUT);
+        let ans = solve_part1(&input);
+        assert_eq!(ans, 19114);
+    }
+
+    #[test]
+    fn day19_solve_p2() {
+        let input = input_generator(TEST_INPUT);
+        let ans = solve_part2(&input);
+        assert_eq!(ans, 167409079868000);
+    }
+
 }
