@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use rayon::prelude::*;
 use petgraph::{prelude::{DiGraphMap,UnGraphMap}, algo::simple_paths::all_simple_paths};
 
 #[derive(Clone,Debug)]
@@ -199,7 +200,7 @@ pub fn solve_day23_p2(input: &Vec<Vec<u8>>) -> u64 {
     let hiking_trail_chars = graph_for_p2(input);
     let HikingTrailP2 { path: hiking_trail, start: start_node, end: end_node } = hiking_trail_chars;
     let ways = all_simple_paths(&hiking_trail, start_node, end_node, 1, None).collect::<Vec<Vec<_>>>();
-    ways.into_iter()
+    ways.into_par_iter()
         .map(|path_vec| {
             path_vec.windows(2)
                 .map(|wsl| {
