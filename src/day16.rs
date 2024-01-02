@@ -3,6 +3,7 @@ use petgraph::{
     graphmap::DiGraphMap,
     visit::Bfs,
 };
+use rayon::prelude::*;
 
 #[derive(Clone,Copy,Debug)]
 enum Optics {
@@ -256,15 +257,14 @@ pub fn solve_part1(input: &Mirrors) -> usize {
 #[aoc(day16, part2)]
 pub fn solve_part2(input: &Mirrors) -> usize {
     let Mirrors {graph: gr, outer_max:om, inner_max:im} = input;
-    let top_sources = (1..*im).map(|x| (0, x));
-    let left_sources = (1..*om).map(|x| (x,0));
-    let right_sources = (1..*om).map(|x| (x,*im));
-    let bottom_sources = (1..*im).map(|x| (*om,x));
+    let top_sources = (1..*im).into_par_iter().map(|x| (0, x));
+    let left_sources = (1..*om).into_par_iter().map(|x| (x,0));
+    let right_sources = (1..*om).into_par_iter().map(|x| (x,*im));
+    let bottom_sources = (1..*im).into_par_iter().map(|x| (*om,x));
     let src_nodes = top_sources.chain(left_sources).chain(right_sources).chain(bottom_sources);
     src_nodes.map(|x|
-        count_illuminated_tiles(&gr, *om, *im, MirrorNode { coords: x, beam_from: IncidenceDirection::Source })
-        )
-        .max().expect("Couldn't count any")
+        count_illuminated_tiles(&gr, *om, *im, MirrorNode { coords: x, beam_from:  IncidenceDirection::Source}))
+        .max().unwrap()
 }
 
 #[cfg(test)]
