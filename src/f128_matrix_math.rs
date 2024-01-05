@@ -1,6 +1,6 @@
 use ndarray::{prelude::*,Zip};
-use f128::f128;
 use num::Float;
+use f128::f128;
 
 #[derive(Debug)]
 pub struct DetFail {}
@@ -9,8 +9,7 @@ pub struct DetFail {}
 pub struct GaussFail {}
 
 /* with rule of sarrus */
-/* with rule of sarrus */
-#[allow(non_snake_case)]
+#[allow(non_snake_case,dead_code)]
 fn f128_3x3_mat_det(A: Array2<f128>) -> Result<f128,DetFail> {
     if A.shape() != [3,3] {
         return Err(DetFail {  });
@@ -29,24 +28,6 @@ fn f128_3x3_mat_det(A: Array2<f128>) -> Result<f128,DetFail> {
     Ok(det)
 }
 
-/* Seems okay? I remember this from Uni, but I can't find a source anywhere online */
-#[allow(non_snake_case)]
-pub fn f128_mat_det(A: &Array2<f128>, B: &Array2<f128>, C: &Array2<f128>, D: &Array2<f128>)
-    -> Result<f128, DetFail> {
-    /* | A  B |
-     * | C  D |
-     * */
-    let det_A = f128_3x3_mat_det(A.clone()).unwrap_or(f128::from(0));
-    let det_B = f128_3x3_mat_det(B.clone()).unwrap_or(f128::from(0));
-    let det_C = f128_3x3_mat_det(C.clone()).unwrap_or(f128::from(0));
-    let det_D = f128_3x3_mat_det(D.clone()).unwrap_or(f128::from(0));
-    let out = det_A * det_D - det_C * det_B;
-    if out < f128::from(1e-9) {
-        return Err(DetFail {  });
-    }
-    Ok(out)
-}
-
 #[allow(non_snake_case)]
 pub fn f128_gauss_elim(A: &mut Array2<f128>, b: &mut Array1<f128>) -> Result<(), GaussFail>{
     let Delta: f128 = f128::from(1e-9);
@@ -58,10 +39,14 @@ pub fn f128_gauss_elim(A: &mut Array2<f128>, b: &mut Array1<f128>) -> Result<(),
     if b.len() != outer_max {
         return Err(GaussFail{});
     }
+    if inner_max > outer_max {
+        return Err(GaussFail{});//system of equations is underdetermined; more vars than eqs
+    }
     loop {
         if (row_pivot == outer_max-1) && (col_pivot == inner_max-1) {
             break;
         }
+        /* Choose largest entry in column; helps with numerical stability */
         let i_max: usize = A
             .slice(s![row_pivot..outer_max,col_pivot])
             .iter()
@@ -70,7 +55,7 @@ pub fn f128_gauss_elim(A: &mut Array2<f128>, b: &mut Array1<f128>) -> Result<(),
                 let foo = y.1.abs();
                 x.1.abs().partial_cmp(&foo).unwrap()
             })
-            .unwrap()// (usize,&f128)
+            .unwrap()
             .0 + row_pivot;
         if A[[i_max,col_pivot]].abs() < Delta {
             /* no pivot in this column, move to next column */
@@ -136,34 +121,6 @@ fn ndarray1_swap_rows(matrix: &mut Array1<f128>, i: usize, j: usize) {
 mod test {
     use num::Float;
     use super::*;
-
-    #[test]
-    fn f128_det_6x6_eye() {
-        let mat_a = Array2::eye(3);
-        let mat_b = Array2::zeros([3,3]);
-        let mat_d = Array2::eye(3);
-        let ans = f128_mat_det(&mat_a, &mat_b, &mat_b, &mat_d).unwrap();
-        assert!((ans - f128::from(1)).abs() < f128::from(1e-9))
-    }
-
-    #[test]
-    fn f128_det_diag() {
-        let mat_a = Array2::from_shape_vec([3,3],
-            vec![
-            f128::from(1),f128::from(0),f128::from(0),
-            f128::from(0),f128::from(2),f128::from(0),
-            f128::from(0),f128::from(0),f128::from(3),
-        ]).unwrap();
-        let mat_b = Array2::zeros([3,3]);
-        let mat_d = Array2::from_shape_vec([3,3],
-            vec![
-            f128::from(1),f128::from(0),f128::from(0),
-            f128::from(0),f128::from(2),f128::from(0),
-            f128::from(0),f128::from(0),f128::from(3),
-        ]).unwrap();
-        let ans = f128_mat_det(&mat_a, &mat_b, &mat_b, &mat_d).unwrap();
-        assert!((ans - f128::from(36)).abs() < f128::from(1e-9))
-    }
 
     #[ignore = "only pretty prints"]
     #[test]

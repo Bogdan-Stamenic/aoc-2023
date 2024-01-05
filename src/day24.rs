@@ -82,8 +82,9 @@ fn parse_num_to_i64(input: &str) -> IResult<&str, i64> {
  *                                           | t|
  * v1,v2 in R^2 --> [v1 v2]^{-1} (x2 - x1) = |-s|
  *
- * t - s = 0 && t > 0  =>  collision!
+ * t > 0 && s < 0 => paths intersect in future
  *
+ * t - s = 0 && t > 0  =>  collision!
  * x1 + t*v1 to find where collision happens
  * */
 fn do_hailstones_collide_in_test_area_p1(stone1: &HailMovement, stone2: &HailMovement, cmin: f64, cmax: f64) -> bool {
@@ -118,13 +119,32 @@ fn skew_crossprod_matrix(input: Array1<f128>) -> Array2<f128> {
     out
 }
 
+/* Start with when hailstones collide with rock:
+ * p0 + t * v0 = p_i + t * v_i,   for i in 1..NUM_HAILSTONES (0 is rock pos and vel)
+ * -> p0 - p_i = -t * (v0 - v_i)
+ *
+ * Linear dependance implies:
+ * -> (p0 - p_i) x (v0 - v_i) = 0  (it's a property of the cross-product)
+ *
+ * -> (p0 x v0) = (p_i x v0) + (p0 x v_i) + (v_i x p_i)
+ * 
+ * Take any three points in i (here p1,p2,p3) and equate the left sides for six
+ * equations (2 eqs over 3d vectors each):
+ * (p1 x v0) + (p0 x v1) + (v1 x p1) = (p2 x v0) + (p0 x v2) + (v2 x p2)
+ * (p2 x v0) + (p0 x v2) + (v2 x p2) = (p3 x v0) + (p0 x v3) + (v3 x p3)
+ *
+ * And solve for matrix equation Ax = b, where x = [p0_x, p0_y, p0_z, v0_x, v0_y, v0_z].
+ * The problem posed in the puzzle implies that if the rock collides with several hailstones,
+ * then it'll collide with ALL of them. Therefore, we don't need to use all of the hailstones,
+ * only enough to solve for x.
+ * */
 #[allow(non_snake_case)]
 fn find_rock_trajectory_p2(input: &[HailMovement]) -> (Array1<f128>,Array1<f128>) {
     let mut x_vec = Array1::from_elem(6, f128::from(0.));
     for win in input.windows(3) {
         let [h0,h1,h2] = win else {unreachable!()};
-        /*      | B  C |   | v1-v0  p1-p0 |  <- all submatrices as skew crossprod mats
-         *  A = | D  E | = | v2-v0  p2-p0 |
+        /*      | B  C |   | v0-v1  p1-p0 |  <- all submatrices as skew crossprod mats
+         *  A = | D  E | = | v1-v2  p2-p1 |
          * */
         let B = skew_crossprod_matrix(h0.v_f128.clone() - h1.v_f128.clone());
         let D = skew_crossprod_matrix(h1.v_f128.clone() - h2.v_f128.clone());
@@ -150,7 +170,7 @@ fn find_rock_trajectory_p2(input: &[HailMovement]) -> (Array1<f128>,Array1<f128>
         }
         match f128_back_substitution(&mut A, &mut x_vec) {
             Ok(_) => {},
-            Err(_) => panic!("Couldn't solve linear system of equations"),
+            Err(_) => unreachable!("Couldn't solve linear system of equations"),
         }
         break;
     }
@@ -179,7 +199,7 @@ pub fn solve_day24_p1(input: &[HailMovement]) -> usize {
 #[aoc(day24,part2)]
 pub fn solve_day24_p2(input: &[HailMovement]) -> u128 {
     let (p, v) = find_rock_trajectory_p2(input);
-    println!("p : {}\nv : {}", p, v);
+    println!("p : {}\nv : {}\n", p, v);
     p.iter().sum::<f128>().into()
 }
 

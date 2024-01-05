@@ -41,6 +41,7 @@ fn parse_spring_groups(input: &str) -> IResult<&str, Vec<u64>> {
     separated_list1(tag(","), parse_num_to_u64)(input)
 }
 
+#[inline]
 fn parse_num_to_u64(input: &str) -> IResult<&str, u64> {
     take_while1(char::is_numeric)
         .map(|num: &str| num.parse::<u64>().unwrap())

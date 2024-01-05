@@ -10,14 +10,14 @@ use nom::{
 
 #[derive(Debug)]
 struct MachinePart{
-    x: i128,
-    m: i128,
-    a: i128,
-    s: i128,
+    x: i64,
+    m: i64,
+    a: i64,
+    s: i64,
 }
 
 impl MachinePart {
-    fn xmas_sum(&self) -> i128 {
+    fn xmas_sum(&self) -> i64 {
         self.x + self.m + self.a + self.s
     }
 }
@@ -25,14 +25,14 @@ impl MachinePart {
 #[derive(Clone,Copy,Debug)]
 struct MachinePartRange {
     /* [a; b) */
-    x: (i128,i128),
-    m: (i128,i128),
-    a: (i128,i128),
-    s: (i128,i128),
+    x: (i64,i64),
+    m: (i64,i64),
+    a: (i64,i64),
+    s: (i64,i64),
 }
 
 impl MachinePartRange {
-    fn count_possible(&self) -> i128 {
+    fn count_possible(&self) -> i64 {
         (self.x.1 - self.x.0)
         * (self.m.1 - self.m.0)
         * (self.a.1 - self.a.0)
@@ -46,6 +46,7 @@ impl MachinePartRange {
         || (self.s.1 - self.s.0 == 0)
     }
 
+    #[allow(dead_code)]
     fn debug_print(&self) {
         println!("{} * {} * {} * {}",
             self.x.1 - self.x.0,
@@ -72,8 +73,8 @@ enum TestResult {
 
 #[derive(Debug,PartialEq,Eq)]
 enum WorkflowTest {
-    LessThan(i128),
-    GreaterThan(i128),
+    LessThan(i64),
+    GreaterThan(i64),
 }
 
 #[allow(dead_code)]
@@ -98,7 +99,7 @@ impl WorkflowRule {
         TestResult::Continue
     }
 
-    fn apply_rule(&self, prop: i128) -> bool {
+    fn apply_rule(&self, prop: i64) -> bool {
         match self.test {
             WorkflowTest::LessThan(val) => {prop < val},
             WorkflowTest::GreaterThan(val) => {prop > val},
@@ -213,12 +214,12 @@ impl WorkflowRule {
     }
 
     #[inline]
-    fn calc_below_range(&self, a: i128, b: i128, d: i128) -> (i128,i128) {
+    fn calc_below_range(&self, a: i64, b: i64, d: i64) -> (i64,i64) {
         (min(a,d), min(b,d))
     }
 
     #[inline]
-    fn calc_above_range(&self, a: i128, b: i128, d: i128) -> (i128,i128) {
+    fn calc_above_range(&self, a: i64, b: i64, d: i64) -> (i64,i64) {
         (max(a,d), max(b,d))
     }
 
@@ -267,7 +268,7 @@ pub struct PartsAndWorkflows {
 }
 
 impl PartsAndWorkflows {
-    fn count_accepted_parts_p1(&self) -> i128 {
+    fn count_accepted_parts_p1(&self) -> i64 {
         self.parts
             .iter()
             .filter(|x| self.is_acceptable_p1(x))
@@ -292,12 +293,12 @@ impl PartsAndWorkflows {
         }
     }
 
-    fn count_possibilites(&self) -> i128 {
+    fn count_possibilites(&self) -> i64 {
         let mut stack = vec![
             ("in".to_string(), MachinePartRange {x: (1,4001), m: (1,4001), a: (1,4001), s: (1,4001)})
         ];
         stack.reserve(1000);
-        let mut accepted_count: i128 = 0;
+        let mut accepted_count: i64 = 0;
         loop {
             let (next_workflow, mut curr_range) = match stack.pop() {
                 Some(val) => val,
@@ -306,12 +307,6 @@ impl PartsAndWorkflows {
             if next_workflow == "A" {
                 let inc = curr_range.count_possible();
                 accepted_count += inc;
-                if inc == 35170560000000 {
-                    curr_range.debug_print();
-                }
-                if inc == 55709440000000 {
-                    curr_range.debug_print();
-                }
                 continue;
             }
             if next_workflow == "R" {
@@ -396,14 +391,14 @@ fn parse_property(input: &str) -> IResult<&str,PartProperty> {
 #[inline]
 fn parse_workflow_test(input: &str) -> IResult<&str,WorkflowTest> {
     alt((
-            preceded(tag("<"), parse_num_to_i128).map(|x| WorkflowTest::LessThan(x)),
-            preceded(tag(">"), parse_num_to_i128).map(|x| WorkflowTest::GreaterThan(x)),
+            preceded(tag("<"), parse_num_to_i64).map(|x| WorkflowTest::LessThan(x)),
+            preceded(tag(">"), parse_num_to_i64).map(|x| WorkflowTest::GreaterThan(x)),
             ))
         .parse(input)
 }
 
-fn parse_num_to_i128(input: &str) -> IResult<&str, i128> {
-    take_while1(|c: char| c.is_ascii_digit()).map(|x: &str| x.parse::<i128>().unwrap())
+fn parse_num_to_i64(input: &str) -> IResult<&str, i64> {
+    take_while1(|c: char| c.is_ascii_digit()).map(|x: &str| x.parse::<i64>().unwrap())
         .parse(input)
 }
 
@@ -417,7 +412,7 @@ fn parse_one_machine_part(input: &str) -> IResult<&str,MachinePart> {
         tag("{"),
         separated_list1(
             tag(","),
-            preceded(preceded(is_a("xmas"), tag("=")), parse_num_to_i128)),
+            preceded(preceded(is_a("xmas"), tag("=")), parse_num_to_i64)),
         tag("}"))
         .map(|el| {
             let mut it = el.into_iter();
@@ -429,13 +424,13 @@ fn parse_one_machine_part(input: &str) -> IResult<&str,MachinePart> {
 
 
 #[aoc(day19, part1)]
-pub fn solve_part1(input: &PartsAndWorkflows) -> i128 {
+pub fn solve_part1(input: &PartsAndWorkflows) -> i64 {
     input.count_accepted_parts_p1()
 }
 
 
 #[aoc(day19, part2)]
-pub fn solve_part2(input: &PartsAndWorkflows) -> i128 {
+pub fn solve_part2(input: &PartsAndWorkflows) -> i64 {
     input.count_possibilites()
 }
 
