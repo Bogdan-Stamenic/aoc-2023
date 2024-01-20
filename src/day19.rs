@@ -1,4 +1,5 @@
 use std::{collections::HashMap, cmp::{min,max}};
+use smallstr::SmallString;
 use nom::{
     Parser,
     IResult,
@@ -67,7 +68,7 @@ enum PartProperty {
 
 #[derive(Debug,PartialEq,Eq)]
 enum TestResult {
-    Jump(String),
+    Jump(SmallString<[u8;4]>),
     Continue,
 }
 
@@ -82,7 +83,7 @@ enum WorkflowTest {
 struct WorkflowRule {
     property: PartProperty,
     test: WorkflowTest,
-    jmp: String,
+    jmp: SmallString<[u8;4]>,
 }
 
 impl WorkflowRule {
@@ -106,7 +107,7 @@ impl WorkflowRule {
         }
     }
 
-    fn split_range(&self, input: &mut MachinePartRange, stack: &mut Vec<(String,MachinePartRange)>)
+    fn split_range(&self, input: &mut MachinePartRange, stack: &mut Vec<(SmallString<[u8;4]>,MachinePartRange)>)
     {
         match self.property
         {
@@ -117,7 +118,7 @@ impl WorkflowRule {
         }
     }
 
-    fn split_range_by_x<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+    fn split_range_by_x<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(SmallString<[u8;4]>,MachinePartRange)>) {
         let new_x_range = match self.test {
             WorkflowTest::LessThan(val) => {
                 let below_range = self.calc_below_range(input.x.0, input.x.1, val);
@@ -141,7 +142,7 @@ impl WorkflowRule {
         input.x = new_x_range;
     }
 
-    fn split_range_by_m<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+    fn split_range_by_m<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(SmallString<[u8;4]>,MachinePartRange)>) {
         let new_m_range = match self.test {
             WorkflowTest::LessThan(val) => {
                 let below_range = self.calc_below_range(input.m.0, input.m.1, val);
@@ -165,7 +166,7 @@ impl WorkflowRule {
         input.m = new_m_range;
     }
 
-    fn split_range_by_a<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+    fn split_range_by_a<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(SmallString<[u8;4]>,MachinePartRange)>) {
         let new_a_range = match self.test {
             WorkflowTest::LessThan(val) => {
                 let below_range = self.calc_below_range(input.a.0, input.a.1, val);
@@ -189,7 +190,7 @@ impl WorkflowRule {
         input.a = new_a_range;
     }
 
-    fn split_range_by_s<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(String,MachinePartRange)>) {
+    fn split_range_by_s<'a>(&'a self, input: &'a mut MachinePartRange, stack: &'a mut Vec<(SmallString<[u8;4]>,MachinePartRange)>) {
         let new_s_range = match self.test {
             WorkflowTest::LessThan(val) => {
                 let below_range = self.calc_below_range(input.s.0, input.s.1, val);
@@ -229,12 +230,12 @@ impl WorkflowRule {
 #[derive(Debug)]
 struct Workflow {
     rules: Vec<WorkflowRule>,
-    default: String
+    default: SmallString<[u8;4]>
 }
 
 #[allow(dead_code)]
 impl Workflow {
-    fn apply(&self, input: &MachinePart) -> String {
+    fn apply(&self, input: &MachinePart) -> SmallString<[u8;4]> {
         let mut next_workflow = self.default.clone();
         for rule in self.rules.iter() {
             match rule.apply(input) {
@@ -250,7 +251,7 @@ impl Workflow {
 
     fn map_range<'a>(&'a self,
         input: &'a mut MachinePartRange,
-        stack: &'a mut Vec<(String,MachinePartRange)>) {
+        stack: &'a mut Vec<(SmallString<[u8;4]>,MachinePartRange)>) {
         for rule in self.rules.iter() {
             rule.split_range(input,stack);
             if input.any_ranges_empty() {
@@ -263,7 +264,7 @@ impl Workflow {
 
 #[derive(Debug)]
 pub struct PartsAndWorkflows {
-    workflows: HashMap<String,Workflow>,
+    workflows: HashMap<SmallString<[u8;4]>,Workflow>,
     parts: Vec<MachinePart>,
 }
 
@@ -295,7 +296,7 @@ impl PartsAndWorkflows {
 
     fn count_possibilites(&self) -> i64 {
         let mut stack = vec![
-            ("in".to_string(), MachinePartRange {x: (1,4001), m: (1,4001), a: (1,4001), s: (1,4001)})
+            (SmallString::<[u8;4]>::from("in"), MachinePartRange {x: (1,4001), m: (1,4001), a: (1,4001), s: (1,4001)})
         ];
         stack.reserve(1000);
         let mut accepted_count: i64 = 0;
@@ -332,27 +333,27 @@ pub fn input_generator(input: &str) -> PartsAndWorkflows {
     }
 }
 
-fn parse_workflows(input: &str) -> IResult<&str,Vec<(String,Workflow)>> {
+fn parse_workflows(input: &str) -> IResult<&str,Vec<(SmallString<[u8;4]>,Workflow)>> {
     separated_list1(tag("\n"), parse_workflow_line).parse(input)
 }
 
-fn parse_workflow_line(input: &str) -> IResult<&str,(String,Workflow)> {
+fn parse_workflow_line(input: &str) -> IResult<&str,(SmallString<[u8;4]>,Workflow)> {
     tuple((
             take_while1(char::is_alphabetic),
             parse_workflow_rules_and_default,
             ))
-        .map(|(the_name,(the_rules,def))| (the_name.to_string(), Workflow{rules: the_rules, default: def}))
+        .map(|(the_name,(the_rules,def))| (SmallString::<[u8;4]>::from(the_name.to_string()), Workflow{rules: the_rules, default: def}))
         .parse(input)
 }
 
-fn parse_workflow_rules_and_default(input: &str) -> IResult<&str,(Vec<WorkflowRule>,String)> {
+fn parse_workflow_rules_and_default(input: &str) -> IResult<&str,(Vec<WorkflowRule>,SmallString<[u8;4]>)> {
     delimited(
         tag("{"),
         separated_list1(tag(","), take_while1(|c: char| c.is_ascii_digit() ||
                 c.is_ascii_alphabetic() || c == ':' || c == '>' || c == '<')),
         tag("}"))
         .map(|v: Vec<&str>| {
-            let default = v.last().unwrap().to_string();
+            let default = SmallString::<[u8;4]>::from(v.last().unwrap().to_string());
             let rules = parse_workflow_rules(&v[..v.len()-1]);
             (rules, default)
         })
@@ -368,7 +369,7 @@ fn parse_workflow_rules(input: &[&str]) -> Vec<WorkflowRule> {
                     tag(":"),
                     take_while1(|c: char| c.is_ascii_alphabetic())
                     ))
-                .map(|el| WorkflowRule {property: el.0, test: el.1, jmp: el.3.to_string()})
+                .map(|el| WorkflowRule {property: el.0, test: el.1, jmp: el.3.into()})
                 .parse(x) {
                 Ok((_,val)) => val,
                 Err(e) => panic!("{}", e)
