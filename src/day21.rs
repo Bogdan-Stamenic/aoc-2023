@@ -91,6 +91,8 @@ pub fn solve_p1(input: &Array2<GardenTile>) -> usize {
     p1_solver(input, None)
 }
 
+//p2 solution : 617729401414635
+
 #[cfg(test)]
 mod tests {
     use super::*;

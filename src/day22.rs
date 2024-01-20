@@ -158,7 +158,8 @@ pub fn solve_day22_p2(input: &FallenBricks) -> usize {
 #[cfg(test)]
 mod test{
     use super::*;
-    const TEST_INPUT: &str = "1,0,1~1,2,1
+    const TEST_INPUT: &str =
+"1,0,1~1,2,1
 0,0,2~2,0,2
 0,2,3~2,2,3
 0,0,4~0,2,4

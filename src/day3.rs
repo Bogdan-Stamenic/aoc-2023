@@ -135,6 +135,7 @@ fn check_above_and_below_for_symbol(input: &Array2<SchematicEntry>, (x,y): (usiz
         })
 }
 
+// 78915902
 //#[aoc(day3, part2)]
 //pub fn solve_part2(input: &[Vec<i64>]) -> i64 {
 //}

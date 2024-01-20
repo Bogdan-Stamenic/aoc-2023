@@ -90,10 +90,10 @@ impl ModuleNetwork {
     }
 
     /* This solution is thanks to insights from the Reddit mega-thread. The entire network models
-     * a mod m counter circuit with 4 bits (at least, my input does), with broadcast as our incoming
-     * clock signal. Each bit has a different periodicity which we need to find when the counter
-     * resets, i.e. m + 1, because that's exactly when rx will receive a low pulse.
-     * This graph illustrates it all quite well (not my input):
+     * 4 mod m counter circuits connected to a NAND (conjunction), with broadcast as our incoming
+     * clock signal. Each counter has a different periodicity m when it resets. rx will receive a
+     * low pulse *exactly when* all 4 counters reset in sync.
+     * This graph illustrates the network and counter structure quite well (not my input):
      * https://www.reddit.com/media?url=https%3A%2F%2Fi.redd.it%2F69qgom9ylg7c1.png
      *
      * Find the periodicity of each sub-circuit and then compute their LCM. */
@@ -120,22 +120,24 @@ impl ModuleNetwork {
                 Some(val) => val,
                 None => break,
             };
-            let childr = self.lookup_children(curr).iter()
-                .map(|x| self.lookup_module(*x).expect("Shouldn't fail"));
-            /* Check if our assumption holds: should never have more than 1 flip-flop as child */
-            if childr.clone().filter(|x| x.module_type == ModuleType::FlipFlop)
-                .count() > 1 {
-                    return Err(());
-            }
-            if childr.clone().any(|x| x.module_type == ModuleType::Conjunction) {
+            unsafe {
+                let childr = self.lookup_children(curr).iter()
+                    .map(|x| self.lookup_module(*x).unwrap_unchecked());
+                /* Check if our assumption holds: should never have more than 1 flip-flop as child */
+                //if childr.clone().filter(|x| x.module_type == ModuleType::FlipFlop)
+                //    .count() > 1 {
+                //        return Err(());
+                //}
+                if childr.clone().any(|x| x.module_type == ModuleType::Conjunction) {
                     counter_period += 1 << bit_number;
-            }
-            /* Push next flip-flop to queue */
-            let next_node = childr.filter(|x| x.module_type == ModuleType::FlipFlop)
-                .map(|x| x.id).next();
-            match next_node {
-                Some(val) => queue.push(val),
-                None => {},
+                }
+                /* Push next flip-flop to queue; stop counting if there's none */
+                let next_node = childr.filter(|x| x.module_type == ModuleType::FlipFlop)
+                    .map(|x| x.id).next();
+                match next_node {
+                    Some(val) => queue.push(val),
+                    None => {},
+                }
             }
             bit_number += 1;
         }
